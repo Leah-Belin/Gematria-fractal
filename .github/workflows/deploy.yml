@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, claude/backend-generator-github-deploy-otb1S]
   workflow_dispatch:
 
 permissions:

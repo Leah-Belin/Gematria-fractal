@@ -190,6 +190,13 @@ function render(canvas, ctx) {
   }
 }
 
+export function resetMatrixLayout() {
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  nodes   = null;
+  settled = false;
+  frameN  = 0;
+}
+
 export function drawMatrix(canvas, ctx, words, meta) {
   const W = canvas.width, H = canvas.height;
   highlight = new Set(words.flatMap(w => w.letters.map(lt => lt.ch)));

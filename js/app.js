@@ -3,7 +3,7 @@ import { cacheGet, cacheSet } from './cache.js';
 import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js';
 import { drawJulia } from './mandelbrot.js';
 import { drawGraph } from './graph.js';
-import { drawMatrix } from './matrix.js';
+import { drawMatrix, resetMatrixLayout } from './matrix.js';
 
 const canvas = document.getElementById('fractal');
 const ctx = canvas.getContext('2d');
@@ -203,8 +203,23 @@ document.getElementById('depth').addEventListener('input', function () {
 
 document.getElementById('draw-btn').addEventListener('click', draw);
 
+function syncPlayBtn() {
+  const btn = document.getElementById('play-btn');
+  if (!btn) return;
+  if (mode === 'matrix') {
+    btn.textContent = '↺ Reset';
+  } else if (!animPlaying) {
+    btn.textContent = '▶ Play';
+  }
+}
+
 document.getElementById('play-btn').addEventListener('click', () => {
-  if (mode === 'matrix' || mode === 'julia') return;
+  if (mode === 'matrix') {
+    resetMatrixLayout();
+    if (analysisData) dispatch(analysisData);
+    return;
+  }
+  if (mode === 'julia') return;
   if (animPlaying) {
     stopAnimation();
   } else {
@@ -224,6 +239,7 @@ document.querySelectorAll('.mode-tab').forEach(btn => {
     document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     mode = this.dataset.mode;
+    syncPlayBtn();
     const infoEl = document.getElementById('mode-info');
     if (infoEl) infoEl.textContent = MODE_DESC[mode] || '';
     if (analysisData) dispatch(analysisData);

@@ -226,6 +226,22 @@ canvas {
   color: var(--amber);
 }
 
+#mode-info {
+  width: 100%;
+  max-width: 860px;
+  min-height: 1.4rem;
+  font-size: 0.7rem;
+  color: var(--gold);
+  opacity: 0.75;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+  padding: 0.3rem 0.2rem 0;
+  transition: opacity 0.15s;
+}
+
+#mode-info:empty { opacity: 0; }
+
 footer {
   padding: 0.8rem;
   font-size: 0.7rem;

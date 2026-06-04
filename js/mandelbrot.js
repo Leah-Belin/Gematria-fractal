@@ -138,14 +138,13 @@ export function drawJulia(canvas, ctx, words) {
 // Renders the full Mandelbrot set and overlays the text's letter sequence as a
 // connected path through parameter space. Each dot = one letter at its c value.
 
-export function drawPath(canvas, ctx, words) {
+export function drawPath(canvas, ctx, words, eigenC = null, lambda1 = null) {
   const W = canvas.width, H = canvas.height;
 
   const img = ctx.createImageData(W, H);
   renderMandelbrot(img.data, W, H, 80);
   ctx.putImageData(img, 0, 0);
 
-  // Complex → pixel for the Mandelbrot view bounds used above
   const toPixel = (re, im) => ({
     x: ((re + 2.5) / 3.5) * W,
     y: ((im + 1.25) / 2.5) * H
@@ -206,4 +205,69 @@ export function drawPath(canvas, ctx, words) {
     ctx.fillText(p.ch, x, y - 9);
     ctx.restore();
   });
+
+  // Eigenvalue marker ★
+  if (eigenC) {
+    const { x: ex, y: ey } = toPixel(eigenC.re, eigenC.im);
+    const egrd = ctx.createRadialGradient(ex, ey, 0, ex, ey, 14);
+    egrd.addColorStop(0, 'rgba(255,255,255,0.7)');
+    egrd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(ex, ey, 14, 0, Math.PI * 2);
+    ctx.fillStyle = egrd; ctx.fill();
+
+    ctx.save();
+    ctx.font = '14px serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('★', ex, ey);
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = '8px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.textAlign = 'left';
+    const label = lambda1 ? `λ₁≈${lambda1} → c=${eigenC.re.toFixed(3)}` : `c_eigen=${eigenC.re.toFixed(3)}`;
+    ctx.fillText(label, ex + 10, ey);
+    ctx.restore();
+  }
+}
+
+// ── Eigen Julia mode ──────────────────────────────────────────────────────────
+// Julia set for c = -1/λ₁ where λ₁ is the Perron eigenvalue of the
+// 27×27 Hebrew letter-expansion matrix M.  This is the "canonical" parameter
+// derived entirely from the structure of the Hebrew substitution morphism.
+
+export function drawEigenJulia(canvas, ctx, eigenC, lambda1) {
+  const W = canvas.width, H = canvas.height;
+  const c = eigenC ?? { re: -0.4093, im: 0 };
+
+  const img = ctx.createImageData(W, H);
+  renderJulia(img.data, W, H, c, 120);
+  ctx.putImageData(img, 0, 0);
+
+  // Annotation panel
+  const lines = [
+    'Hebrew Expansion Matrix',
+    `M ∈ ℕ²⁷ˣ²⁷   x_{n+1} = M·x_n`,
+    `λ₁ ≈ ${lambda1 ?? '?'}   (Perron eigenvalue)`,
+    `c = −1/λ₁ = ${c.re.toFixed(4)}`,
+    'Julia set  J(c):  z → z² + c',
+  ];
+
+  const panelW = 230, panelH = lines.length * 16 + 16;
+  ctx.fillStyle = 'rgba(6,5,3,0.72)';
+  ctx.fillRect(8, H - panelH - 8, panelW, panelH);
+  ctx.strokeStyle = 'rgba(201,168,76,0.3)';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(8, H - panelH - 8, panelW, panelH);
+
+  ctx.save();
+  lines.forEach((line, i) => {
+    ctx.font = i === 0 ? "9px 'Cinzel Decorative', serif" : '8px monospace';
+    ctx.fillStyle = i === 0 ? 'rgba(232,197,106,0.9)' : 'rgba(242,232,200,0.7)';
+    ctx.textAlign = 'left';
+    ctx.fillText(line, 14, H - panelH - 8 + 14 + i * 16);
+  });
+  ctx.restore();
 }

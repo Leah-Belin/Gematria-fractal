@@ -2,6 +2,7 @@ import { analyzeText } from './gematria.js';
 import { cacheGet, cacheSet } from './cache.js';
 import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js';
 import { drawJulia } from './mandelbrot.js';
+import { drawGraph } from './graph.js';
 
 const canvas = document.getElementById('fractal');
 const ctx = canvas.getContext('2d');
@@ -33,6 +34,7 @@ function dispatch(words) {
   else if (mode === 'mandala') drawMandala(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'scatter') drawScatter(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'julia')   drawJulia(canvas, ctx, words);
+  else if (mode === 'graph')   drawGraph(canvas, ctx, words, globalMaxEscape);
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -93,6 +95,7 @@ const MODE_DESC = {
   mandala: 'Letter orbits arranged in radial sectors — one sector per word, one arc per letter. Distance from center = expansion depth. Attractor points glow outward.',
   scatter: 'Phase portrait (return map): each pair of consecutive orbit sums (sₙ₋₁, sₙ) plotted as a point. Attractor cycles appear as fixed clusters or loops.',
   julia:   'Julia set J(c) per word. Parameter c = average of letterToC(v) = 0.7885·e^(i·2πv/400) across the word\'s letters. Rendered by iterating z → z² + c with smooth escape-time coloring.',
+  graph:   'Cartesian plot: x = expansion step n, y = gematria sum Σ (log₂ scale). One colored line per letter. Muted segments = pre-cycle. Bright dots + glow = attractor. ↺ markers on x-axis show where each orbit enters its cycle.',
 };
 
 // ── Main draw ─────────────────────────────────────────────────────────────────

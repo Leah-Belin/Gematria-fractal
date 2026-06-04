@@ -1,0 +1,13 @@
+{
+  "name": "gematria-fractal",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Gematria iterative fractal visualizer with pre-generated preset data",
+  "scripts": {
+    "generate": "node generator/generate.js",
+    "build": "node generator/generate.js && node generator/build.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

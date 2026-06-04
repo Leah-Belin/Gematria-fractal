@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gematria Fractal</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Gematria Fractal</h1>
+  <div class="subtitle">גמטריה — אותיות כמספרים, מספרים כצורות</div>
+</header>
+
+<div class="controls">
+  <div class="control-group">
+    <label>Preset Passage</label>
+    <select id="preset">
+      <option value="">— select —</option>
+      <option value="בְּרֵאשִׁית בָּרָא אֱלֹהִים">בְּרֵאשִׁית בָּרָא אֱלֹהִים (Bereshit 1:1 fragment)</option>
+      <option value="שְׁמַע יִשְׂרָאֵל יְהוָה אֱלֹהֵינוּ יְהוָה אֶחָד">שְׁמַע יִשְׂרָאֵל — Shema</option>
+      <option value="אֱמֶת וֶאֱמוּנָה">אֱמֶת וֶאֱמוּנָה (Truth and Faith)</option>
+      <option value="אַהֲבַת עוֹלָם">אַהֲבַת עוֹלָם (Eternal Love)</option>
+      <option value="תּוֹרָה אוֹר">תּוֹרָה אוֹר (Torah is Light)</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <label>Or Enter Hebrew</label>
+    <input type="text" id="hebrew-input" placeholder="הכנס טקסט עברי" />
+  </div>
+
+  <div class="control-group">
+    <label>Max Iterations</label>
+    <input type="range" id="depth" min="5" max="50" value="20" step="5" />
+    <span id="depth-label" style="font-size:0.75rem;color:var(--gold);text-align:center">20</span>
+  </div>
+
+  <div class="control-group">
+    <label>Visualization</label>
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="spiral">Spiral</button>
+      <button class="mode-tab" data-mode="tree">Tree</button>
+      <button class="mode-tab" data-mode="mandala">Mandala</button>
+      <button class="mode-tab" data-mode="scatter">Scatter</button>
+    </div>
+  </div>
+
+  <button id="draw-btn">✦ Draw</button>
+</div>
+
+<div class="main">
+  <div id="canvas-wrap">
+    <canvas id="fractal" width="520" height="520"></canvas>
+  </div>
+  <div class="sidebar" id="sidebar">
+    <div class="breakdown-title">Gematria Breakdown</div>
+    <div id="breakdown"></div>
+  </div>
+</div>
+
+<footer>Each letter a number · Each number a letter · The text folds into itself</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

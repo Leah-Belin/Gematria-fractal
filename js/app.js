@@ -3,6 +3,7 @@ import { cacheGet, cacheSet } from './cache.js';
 import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js';
 import { drawJulia } from './mandelbrot.js';
 import { drawGraph } from './graph.js';
+import { drawMatrix } from './matrix.js';
 
 const canvas = document.getElementById('fractal');
 const ctx = canvas.getContext('2d');
@@ -12,6 +13,7 @@ let globalMaxEscape = 1;
 
 let presetCache = {};
 let presetDepth = 20;
+let matrixMeta  = null;
 
 async function loadPresets() {
   try {
@@ -19,6 +21,7 @@ async function loadPresets() {
     if (!res.ok) return;
     const json = await res.json();
     presetDepth = json.depth || 20;
+    matrixMeta  = json.matrix || null;
     presetCache = Object.fromEntries(json.presets.map(p => [p.text, p.analysis]));
   } catch {
     // fall through — compute on demand
@@ -29,7 +32,69 @@ function computeMaxEscape(words) {
   return Math.max(1, ...words.flatMap(w => w.letters.map(l => l.escapeIter)));
 }
 
+// ── Matrix animation handle ───────────────────────────────────────────────────
+
+let stopMatrixFn = null;
+
+function stopMatrix() {
+  if (stopMatrixFn) { stopMatrixFn(); stopMatrixFn = null; }
+}
+
+// ── Orbit animation (play/pause) ──────────────────────────────────────────────
+
+let animTimerId = null;
+let animStep    = 0;
+let animPlaying = false;
+
+function sliceWords(words, maxStep) {
+  return words.map(w => ({
+    ...w,
+    letters: w.letters.map(lt => {
+      const steps      = lt.steps.slice(0, maxStep);
+      const cycleFound = lt.cycleStart < maxStep;
+      return {
+        ...lt,
+        steps,
+        escapeIter:  Math.min(lt.escapeIter, maxStep),
+        cycleStart:  cycleFound ? lt.cycleStart  : steps.length,
+        cycleLength: cycleFound ? lt.cycleLength : 0,
+        attractor:   cycleFound ? lt.attractor   : []
+      };
+    })
+  }));
+}
+
+function stopAnimation() {
+  animPlaying = false;
+  clearTimeout(animTimerId);
+  animTimerId = null;
+  const btn = document.getElementById('play-btn');
+  if (btn) btn.textContent = '▶ Play';
+}
+
+function playAnimation() {
+  if (!analysisData || mode === 'matrix' || mode === 'julia') return;
+  const depth = parseInt(document.getElementById('depth').value);
+  animPlaying = true;
+  document.getElementById('play-btn').textContent = '⏸ Pause';
+
+  function step() {
+    if (!animPlaying) return;
+    animStep = Math.min(animStep + 1, depth);
+    dispatch(sliceWords(analysisData, animStep));
+    if (animStep < depth) {
+      animTimerId = setTimeout(step, 160);
+    } else {
+      stopAnimation();
+    }
+  }
+  step();
+}
+
+// ── Dispatch ──────────────────────────────────────────────────────────────────
+
 function dispatch(words) {
+  stopMatrix();
   globalMaxEscape = computeMaxEscape(words);
   if      (mode === 'spiral')  drawSpiral(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'tree')    drawTree(canvas, ctx, words, globalMaxEscape);
@@ -37,6 +102,7 @@ function dispatch(words) {
   else if (mode === 'scatter') drawScatter(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'julia')   drawJulia(canvas, ctx, words);
   else if (mode === 'graph')   drawGraph(canvas, ctx, words, globalMaxEscape);
+  else if (mode === 'matrix')  stopMatrixFn = drawMatrix(canvas, ctx, words, matrixMeta);
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -98,11 +164,13 @@ const MODE_DESC = {
   scatter: 'Phase portrait (return map): each pair of consecutive orbit sums (sₙ₋₁, sₙ) plotted as a point. Attractor cycles appear as fixed clusters or loops.',
   julia:   'Julia set J(c) per word. Parameter c = average of letterToC(v) = 0.7885·e^(i·2πv/400) across the word\'s letters. Rendered by iterating z → z² + c with smooth escape-time coloring.',
   graph:   'Cartesian plot: x = expansion step n, y = gematria sum Σ (log₂ scale). One colored line per letter. Muted segments = pre-cycle. Bright dots + glow = attractor. ↺ markers on x-axis show where each orbit enters its cycle.',
+  matrix:  'Force-directed graph of the 27×27 letter-expansion matrix M. An arrow j→i means letter i appears in the Hebrew name of letter j. Node size = in-degree. Brightness = eigenvector centrality (λ₁ ≈ 2.443). Gold glow = letters present in the current input text. Layout self-animates to equilibrium.',
 };
 
 // ── Main draw ─────────────────────────────────────────────────────────────────
 
 function draw() {
+  stopAnimation();
   const raw   = document.getElementById('hebrew-input').value.trim();
   const depth = parseInt(document.getElementById('depth').value);
   if (!raw) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
@@ -135,12 +203,24 @@ document.getElementById('depth').addEventListener('input', function () {
 
 document.getElementById('draw-btn').addEventListener('click', draw);
 
+document.getElementById('play-btn').addEventListener('click', () => {
+  if (mode === 'matrix' || mode === 'julia') return;
+  if (animPlaying) {
+    stopAnimation();
+  } else {
+    if (!analysisData) draw();
+    animStep = 0;
+    playAnimation();
+  }
+});
+
 document.getElementById('hebrew-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') draw();
 });
 
 document.querySelectorAll('.mode-tab').forEach(btn => {
   btn.addEventListener('click', function () {
+    stopAnimation();
     document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     mode = this.dataset.mode;
@@ -156,7 +236,7 @@ document.querySelectorAll('.mode-tab').forEach(btn => {
 
   btn.addEventListener('mouseleave', function () {
     const infoEl = document.getElementById('mode-info');
-    if (infoEl) infoEl.textContent = '';
+    if (infoEl) infoEl.textContent = MODE_DESC[mode] || '';
   });
 });
 

@@ -226,6 +226,25 @@ canvas {
   color: var(--amber);
 }
 
+.btn-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+#play-btn {
+  font-size: 0.72rem;
+  min-width: 72px;
+  border-color: var(--dim);
+  color: var(--gold);
+  opacity: 0.75;
+}
+
+#play-btn:hover {
+  border-color: var(--gold);
+  opacity: 1;
+}
+
 #mode-info {
   width: 100%;
   max-width: 860px;

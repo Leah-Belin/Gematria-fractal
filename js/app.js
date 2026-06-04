@@ -11,12 +11,14 @@ let analysisData = null;
 let globalMaxEscape = 1;
 
 let presetCache = {};
+let presetDepth = 20;
 
 async function loadPresets() {
   try {
     const res = await fetch('./data/presets.json');
     if (!res.ok) return;
     const json = await res.json();
+    presetDepth = json.depth || 20;
     presetCache = Object.fromEntries(json.presets.map(p => [p.text, p.analysis]));
   } catch {
     // fall through — compute on demand
@@ -105,7 +107,7 @@ function draw() {
   const depth = parseInt(document.getElementById('depth').value);
   if (!raw) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
 
-  if (presetCache[raw]) {
+  if (presetCache[raw] && depth === presetDepth) {
     analysisData = presetCache[raw];
   } else {
     const cached = cacheGet(raw, depth);

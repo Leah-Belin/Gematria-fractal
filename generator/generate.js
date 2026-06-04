@@ -13,11 +13,18 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, '..');
 
 const PASSAGES = [
-  { id: 'bereshit', label: 'בְּרֵאשִׁית בָּרָא אֱלֹהִים (Bereshit 1:1 fragment)', text: 'בְּרֵאשִׁית בָּרָא אֱלֹהִים' },
-  { id: 'shema',    label: 'שְׁמַע יִשְׂרָאֵל — Shema',                            text: 'שְׁמַע יִשְׂרָאֵל יְהוָה אֱלֹהֵינוּ יְהוָה אֶחָד' },
-  { id: 'emet',     label: 'אֱמֶת וֶאֱמוּנָה (Truth and Faith)',                    text: 'אֱמֶת וֶאֱמוּנָה' },
-  { id: 'ahavat',   label: 'אַהֲבַת עוֹלָם (Eternal Love)',                         text: 'אַהֲבַת עוֹלָם' },
-  { id: 'torah',    label: 'תּוֹרָה אוֹר (Torah is Light)',                         text: 'תּוֹרָה אוֹר' }
+  { id: 'bereshit',    label: 'בְּרֵאשִׁית בָּרָא אֱלֹהִים — Genesis 1:1',          text: 'בְּרֵאשִׁית בָּרָא אֱלֹהִים' },
+  { id: 'anochi',      label: 'אָנֹכִי יְהוָה אֱלֹהֶיךָ — Exodus 20:2',             text: 'אָנֹכִי יְהוָה אֱלֹהֶיךָ' },
+  { id: 'mi_chamocha', label: 'מִי כָמֹכָה בָּאֵלִם יְהוָה — Exodus 15:11',         text: 'מִי כָמֹכָה בָּאֵלִם יְהוָה' },
+  { id: 'veahavta',    label: 'וְאָהַבְתָּ לְרֵעֲךָ כָּמוֹךָ — Leviticus 19:18',    text: 'וְאָהַבְתָּ לְרֵעֲךָ כָּמוֹךָ' },
+  { id: 'birkat',      label: 'יְבָרֶכְךָ יְהוָה וְיִשְׁמְרֶךָ — Numbers 6:24',     text: 'יְבָרֶכְךָ יְהוָה וְיִשְׁמְרֶךָ' },
+  { id: 'shema',       label: 'שְׁמַע יִשְׂרָאֵל — Deuteronomy 6:4',                text: 'שְׁמַע יִשְׂרָאֵל יְהוָה אֱלֹהֵינוּ יְהוָה אֶחָד' },
+  { id: 'kadosh',      label: 'קָדוֹשׁ קָדוֹשׁ קָדוֹשׁ יְהוָה צְבָאוֹת — Isaiah 6:3', text: 'קָדוֹשׁ קָדוֹשׁ קָדוֹשׁ יְהוָה צְבָאוֹת' },
+  { id: 'lo_bechayil', label: 'לֹא בְחַיִל וְלֹא בְכֹחַ — Zechariah 4:6',           text: 'לֹא בְחַיִל וְלֹא בְכֹחַ כִּי אִם בְּרוּחִי' },
+  { id: 'psalm23',     label: 'יְהוָה רֹעִי לֹא אֶחְסָר — Psalm 23:1',              text: 'יְהוָה רֹעִי לֹא אֶחְסָר' },
+  { id: 'emet',        label: 'אֱמֶת וֶאֱמוּנָה — Truth and Faith',                  text: 'אֱמֶת וֶאֱמוּנָה' },
+  { id: 'ahavat',      label: 'אַהֲבַת עוֹלָם — Eternal Love',                       text: 'אַהֲבַת עוֹלָם' },
+  { id: 'torah',       label: 'תּוֹרָה אוֹר — Torah is Light (Proverbs 6:23)',       text: 'תּוֹרָה אוֹר' }
 ];
 
 const DEPTH = 20;

@@ -1,6 +1,7 @@
 import { analyzeText, stripNikud, letterValue } from './gematria.js';
 import { cacheGet, cacheSet } from './cache.js';
 import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js';
+import { drawJulia, drawPath } from './mandelbrot.js';
 
 const canvas = document.getElementById('fractal');
 const ctx = canvas.getContext('2d');
@@ -31,7 +32,9 @@ function dispatch(words) {
   if (mode === 'spiral') drawSpiral(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'tree') drawTree(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'mandala') drawMandala(canvas, ctx, words, globalMaxEscape);
-  else drawScatter(canvas, ctx, words, globalMaxEscape);
+  else if (mode === 'scatter') drawScatter(canvas, ctx, words, globalMaxEscape);
+  else if (mode === 'julia') drawJulia(canvas, ctx, words);
+  else if (mode === 'path') drawPath(canvas, ctx, words);
 }
 
 function renderSidebar(words) {

@@ -160,8 +160,19 @@ canvas {
   letter-spacing: 0.15em;
   color: var(--gold);
   opacity: 0.8;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.5rem;
   text-transform: uppercase;
+}
+
+.breakdown-desc {
+  font-size: 0.63rem;
+  color: var(--gold);
+  opacity: 0.5;
+  line-height: 1.65;
+  margin-bottom: 0.9rem;
+  font-style: italic;
+  border-left: 1px solid var(--dim);
+  padding-left: 0.5rem;
 }
 
 .word-block {

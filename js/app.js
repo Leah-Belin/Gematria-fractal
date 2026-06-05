@@ -138,13 +138,13 @@ function renderSidebar(words) {
       const meta = document.createElement('div');
       meta.style.cssText = 'font-size:0.68rem;color:var(--gold);opacity:0.75;margin-left:0.2rem;line-height:1.6;';
       meta.textContent = lt.cycleLength > 0
-        ? `escape: ${lt.escapeIter} · cycle ${lt.cycleLength} · settles @ step ${lt.cycleStart}`
-        : `escape: ${lt.escapeIter} · fixed point @ step ${lt.cycleStart}`;
+        ? `converged @ step ${lt.cycleStart} · growing at λ₁`
+        : `not converged · depth ${lt.escapeIter}`;
 
       if (lt.attractor?.length) {
         const att = document.createElement('div');
         att.style.cssText = 'font-size:0.65rem;color:var(--amber);opacity:0.6;direction:rtl;margin-top:1px;';
-        att.textContent = `attractor: [${lt.attractor.join(', ')}]`;
+        att.textContent = `mix: [${lt.attractor.join(', ')}]`;
         meta.appendChild(att);
       }
       row.appendChild(meta);

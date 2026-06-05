@@ -29,12 +29,24 @@ try {
   rev = Date.now().toString(36);
 }
 
+// Bust index.html asset references
 const htmlPath = join(DIST, 'index.html');
 let html = readFileSync(htmlPath, 'utf8');
 html = html
   .replace(/(href="css\/styles\.css)(")/g, `$1?v=${rev}$2`)
   .replace(/(src="js\/app\.js)(")/g,       `$1?v=${rev}$2`);
 writeFileSync(htmlPath, html, 'utf8');
-console.log(`  cache-busted with ?v=${rev}`);
+
+// Bust all relative ES module imports inside every JS file in dist/js/
+// so that mandelbrot.js, visualizers.js, etc. are also re-fetched after deploy.
+import { readdirSync } from 'node:fs';
+const jsDir = join(DIST, 'js');
+readdirSync(jsDir).filter(f => f.endsWith('.js')).forEach(f => {
+  const p = join(jsDir, f);
+  let src = readFileSync(p, 'utf8');
+  src = src.replace(/(from\s+['"])(\.\/[^'"]+\.js)(['"])/g, `$1$2?v=${rev}$3`);
+  writeFileSync(p, src, 'utf8');
+});
+console.log(`  cache-busted all JS modules with ?v=${rev}`);
 
 console.log(`dist/ ready`);

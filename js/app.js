@@ -162,7 +162,7 @@ const MODE_DESC = {
   tree:    'Orbit branches drawn from word roots. Branch length decays with each expansion step. Gold dots mark letters that have entered the attractor.',
   mandala: 'Letter orbits arranged in radial sectors — one sector per word, one arc per letter. Distance from center = expansion depth. Attractor points glow outward.',
   scatter: 'Phase portrait (return map): each pair of consecutive orbit sums (sₙ₋₁, sₙ) plotted as a point. Attractor cycles appear as fixed clusters or loops.',
-  julia:   'Julia set J(c) per word. c = average of letterToC(v) = 0.7885·e^(i·2πv/400) across the word\'s full letter composition at the current expansion step. Press Play to watch c migrate through the parameter circle as the orbit expands — the Julia set morphs from initial letter values toward the dominant eigenvector composition.',
+  julia:   'Julia set J(c) per word. Static: c = 0.7885·e^(i·2π·Σ/400) where Σ is the word\'s gematria total — each word maps to a unique angle on the parameter circle. Press Play to animate: c shifts to the average of the expanded letter distribution, converging toward the Perron eigenvector as the orbit grows.',
   graph:   'Cartesian plot: x = expansion step n, y = gematria sum Σ (log₂ scale). One colored line per letter. Muted segments = pre-cycle. Bright dots + glow = attractor. ↺ markers on x-axis show where each orbit enters its cycle.',
   matrix:  'Force-directed graph of the 27×27 letter-expansion matrix M. An arrow j→i means letter i appears in the Hebrew name of letter j. Node size = in-degree. Brightness = eigenvector centrality (λ₁ ≈ 2.443). Gold glow = letters present in the current input text. Layout self-animates to equilibrium.',
 };

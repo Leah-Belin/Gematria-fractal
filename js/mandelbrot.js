@@ -26,28 +26,26 @@ export function letterToC(v) {
   return { re: 0.7885 * Math.cos(theta), im: 0.7885 * Math.sin(theta) };
 }
 
-// useExpanded=false  → raw letter values (unique per word, for static display)
-// useExpanded=true   → full expanded multiset at last step (for animation)
+// useExpanded=false  → word gematria total mapped to parameter circle (unique, |c|=0.7885 always)
+// useExpanded=true   → averaged expanded multiset at last step (shows convergence to eigenvector)
 function wordCompositeC(word, useExpanded = false) {
   const lts = word.letters;
   if (!lts.length) return { re: 0, im: 0 };
-  let re = 0, im = 0, count = 0;
   if (useExpanded) {
+    let re = 0, im = 0, count = 0;
     lts.forEach(lt => {
       const vals = lt.steps.length > 0 ? lt.steps.at(-1).vals : [lt.val];
       vals.forEach(v => { const c = letterToC(v); re += c.re; im += c.im; count++; });
     });
-  } else {
-    lts.forEach(lt => { const c = letterToC(lt.val); re += c.re; im += c.im; count++; });
-    count = lts.length;
+    return count > 0 ? { re: re / count, im: im / count } : { re: 0, im: 0 };
   }
-  return count > 0 ? { re: re / count, im: im / count } : { re: 0, im: 0 };
+  return letterToC(word.total);
 }
 
 function stepLabel(word, useExpanded) {
-  if (!useExpanded) return 'initial';
+  if (!useExpanded) return `Σ=${word.total}`;
   const n = Math.max(...word.letters.map(lt => lt.steps.length), 0);
-  return n === 0 ? 'initial' : `step ${n}`;
+  return n === 0 ? 'step 0' : `step ${n}`;
 }
 
 function renderJulia(buf, w, h, c, maxIter) {

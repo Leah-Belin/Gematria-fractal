@@ -307,6 +307,23 @@ export function drawLetterTree(canvas, ctx, words, maxDepth) {
     gx += totalW + WORD_GAP;
   });
 
+  // Set initial pan so the root nodes (the input letters) are the first thing
+  // visible, not the leftmost leaves. Root x = center of subtree, which can be
+  // thousands of pixels from x=0 for deep trees.
+  const allRoots = _groups.flatMap(g => g.roots);
+  if (allRoots.length) {
+    const xs    = allRoots.map(r => r.x);
+    const minRX = Math.min(...xs);
+    const maxRX = Math.max(...xs);
+    // If all roots fit in the canvas, center them; otherwise start at the leftmost root.
+    if (maxRX - minRX + 80 <= canvas.width) {
+      _panX = canvas.width / 2 - (minRX + maxRX) / 2;
+    } else {
+      _panX = 40 - minRX;
+    }
+    _panY = 48;
+  }
+
   redraw();
 
   canvas.addEventListener('mousedown',  onMouseDown);

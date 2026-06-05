@@ -307,21 +307,20 @@ export function drawLetterTree(canvas, ctx, words, maxDepth) {
     gx += totalW + WORD_GAP;
   });
 
-  // Set initial pan so the root nodes (the input letters) are the first thing
-  // visible, not the leftmost leaves. Root x = center of subtree, which can be
-  // thousands of pixels from x=0 for deep trees.
-  const allRoots = _groups.flatMap(g => g.roots);
-  if (allRoots.length) {
-    const xs    = allRoots.map(r => r.x);
-    const minRX = Math.min(...xs);
-    const maxRX = Math.max(...xs);
-    // If all roots fit in the canvas, center them; otherwise start at the leftmost root.
-    if (maxRX - minRX + 80 <= canvas.width) {
-      _panX = canvas.width / 2 - (minRX + maxRX) / 2;
-    } else {
-      _panX = 40 - minRX;
-    }
-    _panY = 48;
+  // Scale to show the first letter's complete tree (all levels, all leaves),
+  // then center it. This is also what ↺ Reset restores to.
+  if (_groups.length && _groups[0].roots.length) {
+    const r0     = _groups[0].roots[0];
+    const treeW  = subtreeW(r0);
+    const labelY = _groups[0].labelY;                  // topmost drawn y (word label)
+    const botY   = y0 + maxDepth * LH + NR + 4;
+
+    const sx = (canvas.width  * 0.88) / treeW;
+    const sy = (canvas.height * 0.88) / (botY - labelY);
+    _scale = Math.min(sx, sy, 1.0);                    // never zoom in beyond 100 %
+
+    _panX = canvas.width  / 2 - r0.x     * _scale;
+    _panY = 12                - labelY   * _scale;
   }
 
   redraw();

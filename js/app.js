@@ -41,6 +41,14 @@ function stopMatrix() {
   if (stopMatrixFn) { stopMatrixFn(); stopMatrixFn = null; }
 }
 
+// ── Letter tree handle ────────────────────────────────────────────────────────
+
+let stopLettersFn = null;
+
+function stopLetterTree() {
+  if (stopLettersFn) { stopLettersFn(); stopLettersFn = null; }
+}
+
 // ── Orbit animation (play/pause) ──────────────────────────────────────────────
 
 let animTimerId = null;
@@ -96,6 +104,7 @@ function playAnimation() {
 
 function dispatch(words) {
   stopMatrix();
+  stopLetterTree();
   globalMaxEscape = computeMaxEscape(words);
   if      (mode === 'spiral')  drawSpiral(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'tree')    drawTree(canvas, ctx, words, globalMaxEscape);
@@ -103,8 +112,8 @@ function dispatch(words) {
   else if (mode === 'scatter') drawScatter(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'julia')   drawJulia(canvas, ctx, words, animPlaying);
   else if (mode === 'graph')   drawGraph(canvas, ctx, words, globalMaxEscape);
-  else if (mode === 'matrix')  stopMatrixFn = drawMatrix(canvas, ctx, words, matrixMeta);
-  else if (mode === 'letters') drawLetterTree(canvas, ctx, words, parseInt(document.getElementById('depth').value));
+  else if (mode === 'matrix')  stopMatrixFn  = drawMatrix(canvas, ctx, words, matrixMeta);
+  else if (mode === 'letters') stopLettersFn = drawLetterTree(canvas, ctx, words, parseInt(document.getElementById('depth').value));
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────

@@ -259,7 +259,7 @@ document.querySelectorAll('.mode-tab').forEach(btn => {
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 window.addEventListener('load', async () => {
-  document.getElementById('depth-label').textContent = '20';
+  document.getElementById('depth-label').textContent = '7';
   await loadPresets();
   const defaultText = 'בְּרֵאשִׁית בָּרָא אֱלֹהִים';
   document.getElementById('preset').value = defaultText;

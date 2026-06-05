@@ -27,7 +27,7 @@ const PASSAGES = [
   { id: 'torah',       label: 'תּוֹרָה אוֹר — Torah is Light (Proverbs 6:23)',       text: 'תּוֹרָה אוֹר' }
 ];
 
-const DEPTH = 20;
+const DEPTH = 7;
 
 // ── Build the letter-expansion matrix M ───────────────────────────────────────
 // Letters indexed in the order they appear in LETTER_VALUES

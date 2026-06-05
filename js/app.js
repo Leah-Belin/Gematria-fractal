@@ -4,6 +4,7 @@ import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js
 import { drawJulia } from './mandelbrot.js';
 import { drawGraph } from './graph.js';
 import { drawMatrix, resetMatrixLayout } from './matrix.js';
+import { drawLetterTree } from './lettertree.js';
 
 const canvas = document.getElementById('fractal');
 const ctx = canvas.getContext('2d');
@@ -73,7 +74,7 @@ function stopAnimation() {
 }
 
 function playAnimation() {
-  if (!analysisData || mode === 'matrix') return;
+  if (!analysisData || mode === 'matrix' || mode === 'letters') return;
   const depth = parseInt(document.getElementById('depth').value);
   animPlaying = true;
   document.getElementById('play-btn').textContent = '⏸ Pause';
@@ -103,6 +104,7 @@ function dispatch(words) {
   else if (mode === 'julia')   drawJulia(canvas, ctx, words, animPlaying);
   else if (mode === 'graph')   drawGraph(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'matrix')  stopMatrixFn = drawMatrix(canvas, ctx, words, matrixMeta);
+  else if (mode === 'letters') drawLetterTree(canvas, ctx, words, parseInt(document.getElementById('depth').value));
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -164,6 +166,7 @@ const MODE_DESC = {
   scatter: 'Phase portrait (return map): each pair of consecutive orbit sums (sₙ₋₁, sₙ) plotted as a point. Attractor cycles appear as fixed clusters or loops.',
   julia:   'Julia set J(c) per word. c = 0.7885·e^(i·2π·Σ/400) where Σ is the gematria total of the current expansion multiset — |c| stays on the parameter circle throughout. Static: Σ = word total (unique per word). Press Play to animate: Σ grows with each expansion step, tracing a path around the parameter circle as the letter composition evolves.',
   graph:   'Cartesian plot: x = expansion step n, y = gematria sum Σ (log₂ scale). One colored line per letter. Muted segments = pre-cycle. Bright dots + glow = attractor. ↺ markers on x-axis show where each orbit enters its cycle.',
+  letters: 'Letter-expansion trees. Each Hebrew glyph shows the letters that make up its name, expanding downward. Dashed curved arrows with arrowheads mark letters that appear in their own ancestry — the self-referential loops of the Hebrew alphabet. Gold glow = letters in the current input.',
   matrix:  'Force-directed graph of the 27×27 letter-expansion matrix M. An arrow j→i means letter i appears in the Hebrew name of letter j. Node size = in-degree. Brightness = eigenvector centrality (λ₁ ≈ 2.443). Gold glow = letters present in the current input text. Layout self-animates to equilibrium.',
 };
 
@@ -206,7 +209,7 @@ document.getElementById('draw-btn').addEventListener('click', draw);
 function syncPlayBtn() {
   const btn = document.getElementById('play-btn');
   if (!btn) return;
-  if (mode === 'matrix') {
+  if (mode === 'matrix' || mode === 'letters') {
     btn.textContent = '↺ Reset';
   } else if (!animPlaying) {
     btn.textContent = '▶ Play';
@@ -216,6 +219,10 @@ function syncPlayBtn() {
 document.getElementById('play-btn').addEventListener('click', () => {
   if (mode === 'matrix') {
     resetMatrixLayout();
+    if (analysisData) dispatch(analysisData);
+    return;
+  }
+  if (mode === 'letters') {
     if (analysisData) dispatch(analysisData);
     return;
   }

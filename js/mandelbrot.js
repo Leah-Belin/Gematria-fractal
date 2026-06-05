@@ -26,26 +26,36 @@ export function letterToC(v) {
   return { re: 0.7885 * Math.cos(theta), im: 0.7885 * Math.sin(theta) };
 }
 
-// Both static and animation use letterToC(expansion_total):
-//   static   → letterToC(word.total)          — initial letter sum, |c|=0.7885
-//   animated → letterToC(sum of expanded vals) — grows with orbit, |c|=0.7885 always
-// This keeps the animation anchored to the static starting frame.
+// Static:    c = letterToC(word.total) — word's gematria identity on the parameter circle
+// Animated:  lerp from that same starting point toward the expanded-letter-average c.
+//            At step 0 the animation frame exactly matches the static drawing.
+//            By step 7 c has drifted to avg(letterToC) of the expanded multiset.
 function wordCompositeC(word, useExpanded = false) {
   const lts = word.letters;
   if (!lts.length) return { re: 0, im: 0 };
-  if (useExpanded) {
-    const total = lts.reduce((s, lt) =>
-      s + (lt.steps.length > 0 ? lt.steps.at(-1).sum : lt.val), 0);
-    return letterToC(total);
-  }
-  return letterToC(word.total);
+
+  const cBase = letterToC(word.total);
+  if (!useExpanded) return cBase;
+
+  let re = 0, im = 0, count = 0;
+  lts.forEach(lt => {
+    const vals = lt.steps.length > 0 ? lt.steps.at(-1).vals : [lt.val];
+    vals.forEach(v => { const c = letterToC(v); re += c.re; im += c.im; count++; });
+  });
+  if (!count) return cBase;
+
+  const n = Math.max(...lts.map(lt => lt.steps.length), 0);
+  const t = n / 7;
+  return {
+    re: cBase.re * (1 - t) + (re / count) * t,
+    im: cBase.im * (1 - t) + (im / count) * t,
+  };
 }
 
 function stepLabel(word, useExpanded) {
   if (!useExpanded) return `Σ=${word.total}`;
-  const total = word.letters.reduce((s, lt) =>
-    s + (lt.steps.length > 0 ? lt.steps.at(-1).sum : lt.val), 0);
-  return `Σ=${total}`;
+  const n = Math.max(...word.letters.map(lt => lt.steps.length), 0);
+  return n === 0 ? `Σ=${word.total}` : `step ${n}`;
 }
 
 function renderJulia(buf, w, h, c, maxIter) {

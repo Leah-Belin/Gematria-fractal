@@ -29,9 +29,19 @@ export function letterToC(v) {
 function wordCompositeC(word) {
   const lts = word.letters;
   if (!lts.length) return { re: 0, im: 0 };
-  let re = 0, im = 0;
-  lts.forEach(lt => { const c = letterToC(lt.val); re += c.re; im += c.im; });
-  return { re: re / lts.length, im: im / lts.length };
+  let re = 0, im = 0, count = 0;
+  lts.forEach(lt => {
+    // Use the full letter composition at the last available expansion step.
+    // At step 0 (no expansions yet) falls back to the raw letter value.
+    const vals = lt.steps.length > 0 ? lt.steps.at(-1).vals : [lt.val];
+    vals.forEach(v => { const c = letterToC(v); re += c.re; im += c.im; count++; });
+  });
+  return count > 0 ? { re: re / count, im: im / count } : { re: 0, im: 0 };
+}
+
+function stepLabel(word) {
+  const n = Math.max(...word.letters.map(lt => lt.steps.length), 0);
+  return n === 0 ? 'initial' : `step ${n}`;
 }
 
 function renderJulia(buf, w, h, c, maxIter) {
@@ -102,7 +112,7 @@ export function drawJulia(canvas, ctx, words) {
     ctx.fillStyle = 'rgba(201,168,76,0.5)';
     ctx.textAlign = 'left';
     ctx.direction = 'ltr';
-    ctx.fillText(`c = ${c.re.toFixed(3)}+${c.im.toFixed(3)}i`, ox + 5, oy + tH - 14);
+    ctx.fillText(`c = ${c.re.toFixed(3)}+${c.im.toFixed(3)}i  [${stepLabel(word)}]`, ox + 5, oy + tH - 14);
     ctx.fillText(`Σ${word.total}`, ox + 5, oy + tH - 4);
     ctx.restore();
   });

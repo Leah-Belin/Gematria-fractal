@@ -219,7 +219,6 @@ document.getElementById('play-btn').addEventListener('click', () => {
     if (analysisData) dispatch(analysisData);
     return;
   }
-  if (mode === 'julia') return;
   if (animPlaying) {
     stopAnimation();
   } else {

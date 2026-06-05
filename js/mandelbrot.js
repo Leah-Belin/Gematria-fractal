@@ -26,26 +26,26 @@ export function letterToC(v) {
   return { re: 0.7885 * Math.cos(theta), im: 0.7885 * Math.sin(theta) };
 }
 
-// useExpanded=false  → word gematria total mapped to parameter circle (unique, |c|=0.7885 always)
-// useExpanded=true   → averaged expanded multiset at last step (shows convergence to eigenvector)
+// Both static and animation use letterToC(expansion_total):
+//   static   → letterToC(word.total)          — initial letter sum, |c|=0.7885
+//   animated → letterToC(sum of expanded vals) — grows with orbit, |c|=0.7885 always
+// This keeps the animation anchored to the static starting frame.
 function wordCompositeC(word, useExpanded = false) {
   const lts = word.letters;
   if (!lts.length) return { re: 0, im: 0 };
   if (useExpanded) {
-    let re = 0, im = 0, count = 0;
-    lts.forEach(lt => {
-      const vals = lt.steps.length > 0 ? lt.steps.at(-1).vals : [lt.val];
-      vals.forEach(v => { const c = letterToC(v); re += c.re; im += c.im; count++; });
-    });
-    return count > 0 ? { re: re / count, im: im / count } : { re: 0, im: 0 };
+    const total = lts.reduce((s, lt) =>
+      s + (lt.steps.length > 0 ? lt.steps.at(-1).sum : lt.val), 0);
+    return letterToC(total);
   }
   return letterToC(word.total);
 }
 
 function stepLabel(word, useExpanded) {
   if (!useExpanded) return `Σ=${word.total}`;
-  const n = Math.max(...word.letters.map(lt => lt.steps.length), 0);
-  return n === 0 ? 'step 0' : `step ${n}`;
+  const total = word.letters.reduce((s, lt) =>
+    s + (lt.steps.length > 0 ? lt.steps.at(-1).sum : lt.val), 0);
+  return `Σ=${total}`;
 }
 
 function renderJulia(buf, w, h, c, maxIter) {

@@ -26,20 +26,26 @@ export function letterToC(v) {
   return { re: 0.7885 * Math.cos(theta), im: 0.7885 * Math.sin(theta) };
 }
 
-function wordCompositeC(word) {
+// useExpanded=false  → raw letter values (unique per word, for static display)
+// useExpanded=true   → full expanded multiset at last step (for animation)
+function wordCompositeC(word, useExpanded = false) {
   const lts = word.letters;
   if (!lts.length) return { re: 0, im: 0 };
   let re = 0, im = 0, count = 0;
-  lts.forEach(lt => {
-    // Use the full letter composition at the last available expansion step.
-    // At step 0 (no expansions yet) falls back to the raw letter value.
-    const vals = lt.steps.length > 0 ? lt.steps.at(-1).vals : [lt.val];
-    vals.forEach(v => { const c = letterToC(v); re += c.re; im += c.im; count++; });
-  });
+  if (useExpanded) {
+    lts.forEach(lt => {
+      const vals = lt.steps.length > 0 ? lt.steps.at(-1).vals : [lt.val];
+      vals.forEach(v => { const c = letterToC(v); re += c.re; im += c.im; count++; });
+    });
+  } else {
+    lts.forEach(lt => { const c = letterToC(lt.val); re += c.re; im += c.im; count++; });
+    count = lts.length;
+  }
   return count > 0 ? { re: re / count, im: im / count } : { re: 0, im: 0 };
 }
 
-function stepLabel(word) {
+function stepLabel(word, useExpanded) {
+  if (!useExpanded) return 'initial';
   const n = Math.max(...word.letters.map(lt => lt.steps.length), 0);
   return n === 0 ? 'initial' : `step ${n}`;
 }
@@ -68,7 +74,7 @@ function renderJulia(buf, w, h, c, maxIter) {
 // Each word → its own Julia set J(c), tiled across the canvas.
 // Single word: full canvas. Multiple words: grid.
 
-export function drawJulia(canvas, ctx, words) {
+export function drawJulia(canvas, ctx, words, useExpanded = false) {
   const W = canvas.width, H = canvas.height;
   const n = words.length;
   if (!n) return;
@@ -88,7 +94,7 @@ export function drawJulia(canvas, ctx, words) {
     const ox = col * tW;
     const oy = row * tH;
 
-    const c = wordCompositeC(word);
+    const c = wordCompositeC(word, useExpanded);
     const img = ctx.createImageData(tW, tH);
     renderJulia(img.data, tW, tH, c, 100);
     ctx.putImageData(img, ox, oy);
@@ -112,7 +118,7 @@ export function drawJulia(canvas, ctx, words) {
     ctx.fillStyle = 'rgba(201,168,76,0.5)';
     ctx.textAlign = 'left';
     ctx.direction = 'ltr';
-    ctx.fillText(`c = ${c.re.toFixed(3)}+${c.im.toFixed(3)}i  [${stepLabel(word)}]`, ox + 5, oy + tH - 14);
+    ctx.fillText(`c = ${c.re.toFixed(3)}+${c.im.toFixed(3)}i  [${stepLabel(word, useExpanded)}]`, ox + 5, oy + tH - 14);
     ctx.fillText(`Σ${word.total}`, ox + 5, oy + tH - 4);
     ctx.restore();
   });

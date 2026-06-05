@@ -100,7 +100,7 @@ function dispatch(words) {
   else if (mode === 'tree')    drawTree(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'mandala') drawMandala(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'scatter') drawScatter(canvas, ctx, words, globalMaxEscape);
-  else if (mode === 'julia')   drawJulia(canvas, ctx, words);
+  else if (mode === 'julia')   drawJulia(canvas, ctx, words, animPlaying);
   else if (mode === 'graph')   drawGraph(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'matrix')  stopMatrixFn = drawMatrix(canvas, ctx, words, matrixMeta);
 }

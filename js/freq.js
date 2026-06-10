@@ -1,159 +1,159 @@
-// Letter-frequency convergence — starts from the actual Torah letter distribution
-// and applies the expansion morphism M repeatedly, showing convergence to the
-// Perron eigenvector (λ₁ ≈ 2.443).  Input text letters are highlighted.
+// Gematria Zipf — log-log rank vs. frequency of gematria values in the
+// expanding letter multiset.  One curve per expansion step.
 
-import { LETTER_VALUES, LETTER_NAMES } from './gematria.js';
+import { LETTER_VALUES } from './gematria.js';
 
 const CANONICAL = 'אבגדהוזחטיכלמנסעפצקרשת';
-
 const VAL_TO_CH = {};
 for (const ch of CANONICAL) VAL_TO_CH[LETTER_VALUES[ch]] = ch;
 
-// Torah letter counts, Five Books of Moses (~304,805 total letters).
-const TORAH = {
-  'א':27059,'ב':16345,'ג':2109,'ד':7032,'ה':28056,'ו':30513,
-  'ז':2198, 'ח':7189, 'ט':1804,'י':31531,'כ':11968,'ל':21570,
-  'מ':25090,'נ':14128,'ס':1564,'ע':11484,'פ':8904, 'צ':3195,
-  'ק':4707, 'ר':18255,'ש':15892,'ת':14212,
-};
+// Collect gematria-value frequency map at each expansion step.
+// Step 0 = just the input letters; step n = vals from lt.steps[n-1].
+function buildValFreqs(words) {
+  const maxSteps = Math.max(0, ...words.flatMap(w => w.letters.map(lt => lt.steps.length)));
+  const result = [];
 
-const N_STEPS = 20;
+  // Step 0: the raw input letters
+  const s0 = {};
+  words.forEach(w => w.letters.forEach(lt => {
+    if (lt.val) s0[lt.val] = (s0[lt.val] || 0) + 1;
+  }));
+  if (Object.keys(s0).length) result.push(s0);
 
-function letterHue(ch) { return (CANONICAL.indexOf(ch) * 360 / 22) % 360; }
-
-// Apply expansion morphism once: each letter → letters of its Hebrew name
-function expand(freq) {
-  const next = {};
-  for (const [ch, cnt] of Object.entries(freq)) {
-    const name = LETTER_NAMES[ch];
-    if (!name) continue;
-    for (const c of name) {
-      const canon = VAL_TO_CH[LETTER_VALUES[c]];
-      if (canon) next[canon] = (next[canon] || 0) + cnt;
-    }
+  for (let s = 0; s < maxSteps; s++) {
+    const comp = {};
+    words.forEach(w => w.letters.forEach(lt => {
+      if (lt.steps[s]) {
+        lt.steps[s].vals.forEach(v => {
+          comp[v] = (comp[v] || 0) + 1;
+        });
+      }
+    }));
+    if (!Object.keys(comp).length) break;
+    result.push(comp);
   }
-  return next;
+  return result;
 }
-
-// Build N_STEPS steps from Torah distribution, normalize each to relative freq
-function buildSteps() {
-  const raw = [{ ...TORAH }];
-  for (let i = 0; i < N_STEPS - 1; i++) raw.push(expand(raw[raw.length - 1]));
-  return raw.map(s => {
-    const tot = Object.values(s).reduce((a, b) => a + b, 0);
-    const r = {};
-    for (const [ch, cnt] of Object.entries(s)) r[ch] = cnt / tot;
-    return r;
-  });
-}
-
-const STEPS = buildSteps(); // pre-compute — independent of input
 
 export function drawFreq(canvas, ctx, words) {
   const W = canvas.width, H = canvas.height;
-  const ML = 58, MR = 52, MT = 36, MB = 52;
+  const ML = 62, MR = 28, MT = 36, MB = 52;
   const PW = W - ML - MR, PH = H - MT - MB;
 
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = '#0a0806'; ctx.fillRect(0, 0, W, H);
 
-  // Letters from the current input, for highlighting
-  const inputChars = new Set(
-    words.flatMap(w => w.letters.map(lt => VAL_TO_CH[lt.val])).filter(Boolean)
-  );
+  if (!words.length) return;
 
-  const maxFreq = Math.max(...Object.values(STEPS[0]));
+  const allFreqs = buildValFreqs(words);
+  if (!allFreqs.length) return;
 
-  function px(s)    { return ML + (s / (N_STEPS - 1)) * PW; }
-  function py(freq) { return MT + (1 - freq / maxFreq) * PH; }
+  // Normalize each step and sort by frequency descending
+  const ranked = allFreqs.map(freq => {
+    const total = Object.values(freq).reduce((a, b) => a + b, 0);
+    return Object.entries(freq)
+      .map(([v, cnt]) => ({ val: +v, rel: cnt / total }))
+      .sort((a, b) => b.rel - a.rel);
+  });
+
+  // Axis range: log-log
+  const maxRank   = Math.max(...ranked.map(r => r.length));
+  const maxRelFreq = Math.max(...ranked.flatMap(r => r.map(p => p.rel)));
+  const minRelFreq = Math.min(...ranked.flatMap(r => r.filter(p => p.rel > 0).map(p => p.rel)));
+
+  const logRankMax = Math.log10(maxRank || 1);
+  const logFreqMax = Math.log10(maxRelFreq) + 0.15;
+  const logFreqMin = Math.log10(minRelFreq)  - 0.3;
+
+  function px(logRank) { return ML + (logRank / logRankMax) * PW; }
+  function py(logFreq) { return MT + (1 - (logFreq - logFreqMin) / (logFreqMax - logFreqMin)) * PH; }
 
   // ── Grid ──
   ctx.lineWidth = 0.5;
-  [0.02, 0.05, 0.1, 0.15, 0.2].forEach(f => {
-    if (f > maxFreq + 0.01) return;
-    const y = py(f);
-    ctx.strokeStyle = 'rgba(58,46,26,0.35)';
+  for (let p = Math.ceil(logFreqMin); p <= Math.floor(logFreqMax) + 1; p += 0.5) {
+    const y = py(p);
+    if (y < MT - 4 || y > MT + PH + 4) continue;
+    ctx.strokeStyle = 'rgba(58,46,26,0.4)';
     ctx.beginPath(); ctx.moveTo(ML, y); ctx.lineTo(ML + PW, y); ctx.stroke();
     ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.3)';
     ctx.textAlign = 'right'; ctx.direction = 'ltr';
-    ctx.fillText(Math.round(f * 100) + '%', ML - 4, y + 3);
-  });
-  [0, 5, 10, 15, 19].forEach(s => {
-    const x = px(s);
-    ctx.strokeStyle = 'rgba(58,46,26,0.35)';
-    ctx.beginPath(); ctx.moveTo(x, MT); ctx.lineTo(x, MT + PH); ctx.stroke();
-    ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.35)';
-    ctx.textAlign = 'center'; ctx.direction = 'ltr';
-    ctx.fillText(s === 0 ? 'Torah' : s, x, MT + PH + 14);
-  });
-
-  // ── Lines — background letters first, then input letters on top ──
-  [false, true].forEach(doInput => {
-    CANONICAL.split('').forEach(ch => {
-      if (inputChars.has(ch) !== doInput) return;
-      const hue   = letterHue(ch);
-      const alpha = doInput ? 0.90 : 0.30;
-      const lw    = doInput ? 2.2  : 0.8;
-
-      ctx.beginPath();
-      STEPS.forEach((r, s) => {
-        const x = px(s), y = py(r[ch] || 0);
-        s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      });
-      ctx.strokeStyle = `hsla(${hue},72%,58%,${alpha})`;
-      ctx.lineWidth = lw;
-      ctx.stroke();
-    });
-  });
-
-  // ── Right-edge labels with anti-collision ──
-  // Compute natural y for each letter at final step
-  const labels = CANONICAL.split('').map(ch => ({
-    ch,
-    naturalY: py(STEPS[N_STEPS - 1][ch] || 0),
-    isInput: inputChars.has(ch),
-  }));
-  labels.sort((a, b) => a.naturalY - b.naturalY);
-
-  // Nudge labels apart (top-down pass)
-  const MIN_SP = 13;
-  for (let i = 1; i < labels.length; i++) {
-    if (labels[i].naturalY - labels[i - 1].naturalY < MIN_SP) {
-      labels[i].naturalY = labels[i - 1].naturalY + MIN_SP;
-    }
+    ctx.fillText((Math.pow(10, p) * 100).toFixed(1) + '%', ML - 4, y + 3);
   }
-  labels.forEach(l => { l.naturalY = Math.max(MT + 6, Math.min(MT + PH, l.naturalY)); });
+  for (let r = 1; r <= maxRank; r *= (maxRank < 6 ? 2 : (maxRank < 20 ? 3 : 5))) {
+    const x = px(Math.log10(r));
+    ctx.strokeStyle = 'rgba(58,46,26,0.4)';
+    ctx.beginPath(); ctx.moveTo(x, MT); ctx.lineTo(x, MT + PH); ctx.stroke();
+    ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.3)';
+    ctx.textAlign = 'center'; ctx.direction = 'ltr';
+    ctx.fillText(r, x, MT + PH + 14);
+    if (r >= maxRank) break;
+  }
 
-  const rx = px(N_STEPS - 1);
-  labels.forEach(({ ch, naturalY: ly, isInput }) => {
-    const hue   = letterHue(ch);
-    const alpha = isInput ? 0.92 : 0.45;
+  // ── Ideal Zipf reference (slope = −1) ──
+  ctx.save();
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(201,168,76,0.18)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(px(0),            py(logFreqMax - 0.1));
+  ctx.lineTo(px(logRankMax),   py(logFreqMax - 0.1 - logRankMax));
+  ctx.stroke();
+  ctx.restore();
 
-    // Dot at actual final position
-    const dotY = py(STEPS[N_STEPS - 1][ch] || 0);
+  // ── One curve per expansion step ──
+  ranked.forEach((pts, si) => {
+    if (!pts.length) return;
+    const t     = si / Math.max(1, ranked.length - 1);
+    const alpha = 0.25 + t * 0.70;
+    const hue   = 200 + si * 22;
+
     ctx.beginPath();
-    ctx.arc(rx, dotY, isInput ? 3.5 : 2, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${hue},72%,62%,${alpha})`;
-    ctx.fill();
+    pts.forEach(({ rel }, i) => {
+      const x = px(Math.log10(i + 1));
+      const y = py(Math.log10(rel));
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = `hsla(${hue},68%,55%,${alpha})`;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
 
-    // Label at nudged position
-    ctx.font = `${isInput ? 16 : 13}px 'EB Garamond', serif`;
-    ctx.fillStyle = `hsla(${hue},72%,${isInput ? 76 : 58}%,${alpha})`;
-    ctx.textAlign = 'left'; ctx.direction = 'ltr';
-    ctx.fillText(ch, rx + 7, ly + 5);
+    // Step label near end of curve
+    const last = pts[pts.length - 1];
+    if (last) {
+      ctx.font = '8px monospace'; ctx.direction = 'ltr';
+      ctx.fillStyle = `hsla(${hue},68%,55%,${alpha + 0.1})`;
+      ctx.textAlign = 'left';
+      ctx.fillText(`step ${si}`,
+        px(Math.log10(pts.length)) + 4,
+        py(Math.log10(last.rel)) + 3);
+    }
   });
 
-  // ── Glow on input chars at step 0 ──
-  inputChars.forEach(ch => {
-    const hue = letterHue(ch);
-    ctx.save();
-    ctx.shadowColor = `hsla(${hue},80%,62%,0.7)`;
-    ctx.shadowBlur  = 12;
+  // ── Dots + labels on the deepest step ──
+  const deepest = ranked[ranked.length - 1] || [];
+  deepest.forEach(({ val, rel }, i) => {
+    const x  = px(Math.log10(i + 1));
+    const y  = py(Math.log10(rel));
+    const ch = VAL_TO_CH[val];
+
+    // Dot
     ctx.beginPath();
-    ctx.arc(px(0), py(STEPS[0][ch] || 0), 5, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${hue},80%,74%,0.9)`;
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(201,168,76,0.85)';
     ctx.fill();
-    ctx.restore();
+
+    // Hebrew glyph inside dot
+    if (ch) {
+      ctx.font = `12px 'EB Garamond', serif`;
+      ctx.fillStyle = '#1a1208';
+      ctx.textAlign = 'center'; ctx.direction = 'ltr';
+      ctx.fillText(ch, x, y + 4);
+    }
+
+    // Gematria value above dot
+    ctx.font = '8px monospace';
+    ctx.fillStyle = 'rgba(201,168,76,0.65)';
+    ctx.textAlign = 'center'; ctx.direction = 'ltr';
+    ctx.fillText(val, x, y - 8);
   });
 
   // ── Axes ──
@@ -163,14 +163,14 @@ export function drawFreq(canvas, ctx, words) {
 
   ctx.font = '10px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.5)';
   ctx.textAlign = 'center'; ctx.direction = 'ltr';
-  ctx.fillText('expansion iterations applied to Torah distribution', ML + PW / 2, H - 8);
+  ctx.fillText('gematria value rank  (log scale)', ML + PW / 2, H - 8);
   ctx.save();
   ctx.translate(13, MT + PH / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText('fraction of all letters', 0, 0);
+  ctx.fillText('frequency  (log scale)', 0, 0);
   ctx.restore();
 
   ctx.font = '10px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.38)';
   ctx.textAlign = 'left'; ctx.direction = 'ltr';
-  ctx.fillText('Torah → Perron eigenvector  ·  bright = input letters', ML, MT - 10);
+  ctx.fillText('gematria value distribution per expansion step  ·  dashed = Zipf', ML, MT - 10);
 }

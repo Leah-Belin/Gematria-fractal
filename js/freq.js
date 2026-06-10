@@ -1,14 +1,50 @@
-// Gematria Zipf — expand every input letter to convergence, accumulate all
-// occurrences into one dictionary, then plot rank vs. frequency log-log.
+// Gematria Zipf — expand letters to convergence, plot rank vs. frequency.
+// Two modes: all 22 Hebrew letters, or just the current input letters.
 
-import { LETTER_VALUES } from './gematria.js';
+import { LETTER_VALUES, LETTER_NAMES } from './gematria.js';
 
 const CANONICAL = 'אבגדהוזחטיכלמנסעפצקרשת';
 const VAL_TO_CH = {};
 for (const ch of CANONICAL) VAL_TO_CH[LETTER_VALUES[ch]] = ch;
 
-// Expand each input letter to its deepest step, accumulate into one dict.
-function buildDict(words) {
+// ── Module state ──────────────────────────────────────────────────────────────
+
+let _mode    = 'all';   // 'all' | 'input'
+let _canvas  = null;
+let _clickFn = null;
+let _btnRects = [];
+
+// ── Dictionary builders ───────────────────────────────────────────────────────
+
+// Expand a set of starting chars to maxDepth, accumulate into dict
+function expandToDict(startChars, maxDepth) {
+  const dict = {};
+  for (const ch of startChars) {
+    let current = [ch];
+    for (let d = 0; d < maxDepth; d++) {
+      const next = [];
+      for (const c of current) {
+        const name = LETTER_NAMES[c];
+        if (!name) { next.push(c); continue; }
+        for (const n of name) { if (LETTER_VALUES[n]) next.push(n); }
+      }
+      if (!next.length) break;
+      current = next;
+      if (current.length > 4000) break; // safety cap
+    }
+    for (const c of current) {
+      const canon = VAL_TO_CH[LETTER_VALUES[c]];
+      if (canon) dict[canon] = (dict[canon] || 0) + 1;
+    }
+  }
+  return dict;
+}
+
+function buildAllDict(maxDepth) {
+  return expandToDict(CANONICAL, maxDepth);
+}
+
+function buildInputDict(words) {
   const dict = {};
   words.forEach(w => w.letters.forEach(lt => {
     const finalStep = lt.steps.length > 0 ? lt.steps[lt.steps.length - 1] : null;
@@ -21,26 +57,52 @@ function buildDict(words) {
   return dict;
 }
 
-export function drawFreq(canvas, ctx, words) {
+// ── Toggle buttons ────────────────────────────────────────────────────────────
+
+function drawToggle(ctx, W, MT) {
+  const labels = ['All Letters', 'Input'];
+  const modes  = ['all', 'input'];
+  const bW = 76, bH = 20, gap = 6;
+  let bx = W - (labels.length * bW + (labels.length - 1) * gap) - 8;
+  const by = MT - 30;
+
+  _btnRects = [];
+  labels.forEach((label, i) => {
+    const active = _mode === modes[i];
+    ctx.beginPath(); ctx.rect(bx, by, bW, bH);
+    ctx.fillStyle   = active ? 'rgba(201,168,76,0.22)' : 'rgba(10,8,6,0.6)';
+    ctx.fill();
+    ctx.strokeStyle = active ? 'rgba(232,197,106,0.85)' : 'rgba(58,46,26,0.65)';
+    ctx.lineWidth   = active ? 1.5 : 1;
+    ctx.stroke();
+
+    ctx.font = `${active ? 'bold ' : ''}11px monospace`;
+    ctx.fillStyle   = active ? 'rgba(232,197,106,0.97)' : 'rgba(201,168,76,0.5)';
+    ctx.textAlign   = 'center'; ctx.direction = 'ltr';
+    ctx.fillText(label, bx + bW / 2, by + 13);
+
+    _btnRects.push({ mode: modes[i], x: bx, y: by, w: bW, h: bH });
+    bx += bW + gap;
+  });
+}
+
+// ── Shared chart renderer ─────────────────────────────────────────────────────
+
+function drawZipfChart(canvas, ctx, dict, inputChars, title) {
   const W = canvas.width, H = canvas.height;
-  const ML = 62, MR = 28, MT = 36, MB = 52;
+  const ML = 62, MR = 28, MT = 56, MB = 52;
   const PW = W - ML - MR, PH = H - MT - MB;
 
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = '#0a0806'; ctx.fillRect(0, 0, W, H);
 
-  if (!words.length) return;
+  drawToggle(ctx, W, MT);
 
-  const dict = buildDict(words);
   const entries = Object.entries(dict)
     .map(([ch, cnt]) => ({ ch, cnt }))
     .sort((a, b) => b.cnt - a.cnt);
 
   if (!entries.length) return;
-
-  const inputChars = new Set(
-    words.flatMap(w => w.letters.map(lt => VAL_TO_CH[lt.val])).filter(Boolean)
-  );
 
   const total      = entries.reduce((s, e) => s + e.cnt, 0);
   const maxRel     = entries[0].cnt / total;
@@ -52,7 +114,7 @@ export function drawFreq(canvas, ctx, words) {
   function px(logRank) { return ML + (logRank / logRankMax) * PW; }
   function py(logFreq) { return MT + (1 - (logFreq - logFreqMin) / (logFreqMax - logFreqMin)) * PH; }
 
-  // ── Grid ──
+  // Grid
   ctx.lineWidth = 0.5;
   for (let p = Math.floor(logFreqMin); p <= Math.ceil(logFreqMax); p += 0.5) {
     const y = py(p);
@@ -63,84 +125,67 @@ export function drawFreq(canvas, ctx, words) {
     ctx.textAlign = 'right'; ctx.direction = 'ltr';
     ctx.fillText((Math.pow(10, p) * 100).toFixed(1) + '%', ML - 4, y + 3);
   }
-  entries.forEach((_, i) => {
-    if (i === 0 || (i + 1) % 3 !== 0) return;
-    const x = px(Math.log10(i + 1));
+  [1, 3, 6, 10, entries.length].forEach(r => {
+    if (r > entries.length) return;
+    const x = px(Math.log10(r));
     ctx.strokeStyle = 'rgba(58,46,26,0.4)';
     ctx.beginPath(); ctx.moveTo(x, MT); ctx.lineTo(x, MT + PH); ctx.stroke();
     ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.3)';
     ctx.textAlign = 'center'; ctx.direction = 'ltr';
-    ctx.fillText(i + 1, x, MT + PH + 14);
+    ctx.fillText(r, x, MT + PH + 14);
   });
-  // Always label rank 1
-  {
-    const x = px(0);
-    ctx.strokeStyle = 'rgba(58,46,26,0.4)';
-    ctx.beginPath(); ctx.moveTo(x, MT); ctx.lineTo(x, MT + PH); ctx.stroke();
-    ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.3)';
-    ctx.textAlign = 'center'; ctx.direction = 'ltr';
-    ctx.fillText(1, x, MT + PH + 14);
-  }
 
-  // ── Ideal Zipf reference (slope = −1) ──
+  // Ideal Zipf reference (slope = −1)
   ctx.save();
   ctx.setLineDash([4, 4]);
   ctx.strokeStyle = 'rgba(201,168,76,0.18)'; ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(px(0),            py(Math.log10(maxRel)));
-  ctx.lineTo(px(logRankMax),   py(Math.log10(maxRel / entries.length)));
+  ctx.moveTo(px(0),          py(Math.log10(maxRel)));
+  ctx.lineTo(px(logRankMax), py(Math.log10(maxRel / entries.length)));
   ctx.stroke();
   ctx.restore();
 
-  // ── Connector line through all dots ──
+  // Connector line
   ctx.beginPath();
   entries.forEach(({ cnt }, i) => {
     const x = px(Math.log10(i + 1));
     const y = py(Math.log10(cnt / total));
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
-  ctx.strokeStyle = 'rgba(201,168,76,0.25)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(201,168,76,0.25)'; ctx.lineWidth = 1;
   ctx.stroke();
 
-  // ── Dots + labels ──
+  // Dots + labels
   entries.forEach(({ ch, cnt }, i) => {
     const x       = px(Math.log10(i + 1));
     const y       = py(Math.log10(cnt / total));
     const isInput = inputChars.has(ch);
     const r       = isInput ? 9 : 7;
 
-    // Glow for input letters
     if (isInput) {
       ctx.save();
       ctx.shadowColor = 'rgba(232,197,106,0.55)';
       ctx.shadowBlur  = 14;
-      ctx.beginPath();
-      ctx.arc(x, y, r + 1, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(232,197,106,0.92)';
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, r + 1, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(232,197,106,0.92)'; ctx.fill();
       ctx.restore();
     }
 
-    // Circle
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fillStyle = isInput ? 'rgba(232,197,106,0.92)' : 'rgba(201,168,76,0.80)';
     ctx.fill();
 
-    // Hebrew glyph inside
     ctx.font = `${isInput ? 15 : 13}px 'EB Garamond', serif`;
     ctx.fillStyle = '#1a1208';
     ctx.textAlign = 'center'; ctx.direction = 'ltr';
     ctx.fillText(ch, x, y + 5);
 
-    // Gematria value above
     ctx.font = '8px monospace';
     ctx.fillStyle = isInput ? 'rgba(232,197,106,0.75)' : 'rgba(201,168,76,0.55)';
     ctx.fillText(LETTER_VALUES[ch], x, y - r - 3);
   });
 
-  // ── Axes ──
+  // Axes
   ctx.strokeStyle = 'rgba(58,46,26,0.8)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(ML, MT);      ctx.lineTo(ML, MT + PH); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(ML, MT + PH); ctx.lineTo(ML + PW, MT + PH); ctx.stroke();
@@ -156,5 +201,49 @@ export function drawFreq(canvas, ctx, words) {
 
   ctx.font = '10px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.38)';
   ctx.textAlign = 'left'; ctx.direction = 'ltr';
-  ctx.fillText('expanded letter dictionary  ·  bright = input letters  ·  dashed = Zipf', ML, MT - 10);
+  ctx.fillText(title + '  ·  bright = input letters  ·  dashed = Zipf', ML, MT - 10);
+}
+
+// ── Public ────────────────────────────────────────────────────────────────────
+
+export function drawFreq(canvas, ctx, words, maxDepth) {
+  if (_canvas && _clickFn) _canvas.removeEventListener('click', _clickFn);
+  _canvas = canvas;
+
+  const inputChars = new Set(
+    words.flatMap(w => w.letters.map(lt => VAL_TO_CH[lt.val])).filter(Boolean)
+  );
+
+  function render() {
+    if (_mode === 'all') {
+      const dict = buildAllDict(maxDepth);
+      drawZipfChart(canvas, ctx, dict, inputChars, 'all 22 letters expanded');
+    } else {
+      const dict = buildInputDict(words);
+      drawZipfChart(canvas, ctx, dict, inputChars, 'input letters expanded');
+    }
+  }
+
+  _clickFn = (e) => {
+    const r  = canvas.getBoundingClientRect();
+    const k  = canvas.width / r.width;
+    const cx = (e.clientX - r.left) * k;
+    const cy = (e.clientY - r.top)  * k;
+    for (const btn of _btnRects) {
+      if (cx >= btn.x && cx <= btn.x + btn.w && cy >= btn.y && cy <= btn.y + btn.h) {
+        if (_mode !== btn.mode) { _mode = btn.mode; render(); }
+        return;
+      }
+    }
+  };
+
+  canvas.addEventListener('click', _clickFn);
+  render();
+
+  return function stop() {
+    if (_canvas === canvas) {
+      canvas.removeEventListener('click', _clickFn);
+      _canvas = null; _clickFn = null;
+    }
+  };
 }

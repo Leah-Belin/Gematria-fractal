@@ -59,6 +59,14 @@ function stopZipf() {
   if (stopZipfFn) { stopZipfFn(); stopZipfFn = null; }
 }
 
+// ── Freq handle ───────────────────────────────────────────────────────────────
+
+let stopFreqFn = null;
+
+function stopFreq() {
+  if (stopFreqFn) { stopFreqFn(); stopFreqFn = null; }
+}
+
 // ── Orbit animation (play/pause) ──────────────────────────────────────────────
 
 let animTimerId = null;
@@ -116,6 +124,7 @@ function dispatch(words) {
   stopMatrix();
   stopLetterTree();
   stopZipf();
+  stopFreq();
   globalMaxEscape = computeMaxEscape(words);
   if      (mode === 'spiral')  drawSpiral(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'tree')    drawTree(canvas, ctx, words, globalMaxEscape);
@@ -126,7 +135,7 @@ function dispatch(words) {
   else if (mode === 'matrix')  stopMatrixFn  = drawMatrix(canvas, ctx, words, matrixMeta);
   else if (mode === 'letters') stopLettersFn = drawLetterTree(canvas, ctx, words, parseInt(document.getElementById('depth').value));
   else if (mode === 'zipf')    stopZipfFn    = drawZipf(canvas, ctx, words);
-  else if (mode === 'freq')    drawFreq(canvas, ctx, words);
+  else if (mode === 'freq')    stopFreqFn = drawFreq(canvas, ctx, words, parseInt(document.getElementById('depth').value));
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────

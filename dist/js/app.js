@@ -1,12 +1,12 @@
-import { analyzeText } from './gematria.js?v=da378df';
-import { cacheGet, cacheSet } from './cache.js?v=da378df';
-import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js?v=da378df';
-import { drawJulia } from './mandelbrot.js?v=da378df';
-import { drawGraph } from './graph.js?v=da378df';
-import { drawMatrix, resetMatrixLayout } from './matrix.js?v=da378df';
-import { drawLetterTree } from './lettertree.js?v=da378df';
-import { drawZipf } from './zipf.js?v=da378df';
-import { drawFreq } from './freq.js?v=da378df';
+import { analyzeText } from './gematria.js?v=14b18d7';
+import { cacheGet, cacheSet } from './cache.js?v=14b18d7';
+import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js?v=14b18d7';
+import { drawJulia } from './mandelbrot.js?v=14b18d7';
+import { drawGraph } from './graph.js?v=14b18d7';
+import { drawMatrix, resetMatrixLayout } from './matrix.js?v=14b18d7';
+import { drawLetterTree } from './lettertree.js?v=14b18d7';
+import { drawZipf } from './zipf.js?v=14b18d7';
+import { drawFreq } from './freq.js?v=14b18d7';
 
 const canvas = document.getElementById('fractal');
 const ctx = canvas.getContext('2d');
@@ -57,6 +57,14 @@ let stopZipfFn = null;
 
 function stopZipf() {
   if (stopZipfFn) { stopZipfFn(); stopZipfFn = null; }
+}
+
+// ── Freq handle ───────────────────────────────────────────────────────────────
+
+let stopFreqFn = null;
+
+function stopFreq() {
+  if (stopFreqFn) { stopFreqFn(); stopFreqFn = null; }
 }
 
 // ── Orbit animation (play/pause) ──────────────────────────────────────────────
@@ -116,6 +124,7 @@ function dispatch(words) {
   stopMatrix();
   stopLetterTree();
   stopZipf();
+  stopFreq();
   globalMaxEscape = computeMaxEscape(words);
   if      (mode === 'spiral')  drawSpiral(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'tree')    drawTree(canvas, ctx, words, globalMaxEscape);
@@ -126,7 +135,7 @@ function dispatch(words) {
   else if (mode === 'matrix')  stopMatrixFn  = drawMatrix(canvas, ctx, words, matrixMeta);
   else if (mode === 'letters') stopLettersFn = drawLetterTree(canvas, ctx, words, parseInt(document.getElementById('depth').value));
   else if (mode === 'zipf')    stopZipfFn    = drawZipf(canvas, ctx, words);
-  else if (mode === 'freq')    drawFreq(canvas, ctx, words);
+  else if (mode === 'freq')    stopFreqFn = drawFreq(canvas, ctx, words, parseInt(document.getElementById('depth').value));
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────

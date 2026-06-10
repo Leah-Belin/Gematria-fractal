@@ -1,12 +1,12 @@
-import { analyzeText } from './gematria.js?v=7e8b24e';
-import { cacheGet, cacheSet } from './cache.js?v=7e8b24e';
-import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js?v=7e8b24e';
-import { drawJulia } from './mandelbrot.js?v=7e8b24e';
-import { drawGraph } from './graph.js?v=7e8b24e';
-import { drawMatrix, resetMatrixLayout } from './matrix.js?v=7e8b24e';
-import { drawLetterTree } from './lettertree.js?v=7e8b24e';
-import { drawZipf } from './zipf.js?v=7e8b24e';
-import { drawFreq } from './freq.js?v=7e8b24e';
+import { analyzeText } from './gematria.js?v=da378df';
+import { cacheGet, cacheSet } from './cache.js?v=da378df';
+import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js?v=da378df';
+import { drawJulia } from './mandelbrot.js?v=da378df';
+import { drawGraph } from './graph.js?v=da378df';
+import { drawMatrix, resetMatrixLayout } from './matrix.js?v=da378df';
+import { drawLetterTree } from './lettertree.js?v=da378df';
+import { drawZipf } from './zipf.js?v=da378df';
+import { drawFreq } from './freq.js?v=da378df';
 
 const canvas = document.getElementById('fractal');
 const ctx = canvas.getContext('2d');

@@ -1,10 +1,16 @@
 // Zipf visualization — log-log rank vs. frequency for Torah letters and words.
 // Toggle Letters / Words at top-right. In word mode, drag to pan, scroll/pinch to zoom.
 
-import { LETTER_VALUES } from './gematria.js?v=133c82b';
+import { LETTER_VALUES } from './gematria.js?v=4c365d9';
 
 // ── Torah data ────────────────────────────────────────────────────────────────
 
+// Letter counts: Five Books of Moses, 304,805 letters total (standard Masoretic text,
+// sofit forms merged with base). All 22 values confirmed against xwalk.ca/lt.html;
+// cross-checked with AishDas Society Pamphlet 9 (Tanach Yehoash tradition — alef
+// differs by 2, within Masoretic scribal variance noted in Kiddushin 30a).
+// Academic anchor: Alexander Marx, "Number of Letters in the Pentateuch,"
+// Journal of Biblical Literature 38 (1919), JSTOR 3260008.
 const TORAH_LETTER_FREQ = {
   'א':27059,'ב':16345,'ג':2109,'ד':7032,'ה':28056,'ו':30513,
   'ז':2198, 'ח':7189, 'ט':1804,'י':31531,'כ':11968,'ל':21570,
@@ -12,8 +18,15 @@ const TORAH_LETTER_FREQ = {
   'ק':4707, 'ר':18255,'ש':15892,'ת':14212,
 };
 
+// Word frequencies: Torah-only token counts (Five Books of Moses, ~79,980 total words).
+// Confirmed: יְהוָה ≈ 1,820 (multiple sources); מֹשֶׁה ≈ 647 (BDB/Strong's H4872 by book).
+// Whole-Bible counts via Westminster Leningrad Codex (Blue Letter Bible / Strong's).
+// For authoritative Torah-only counts: ETCBC BHSA corpus (github.com/ETCBC/bhsa)
+// or Open Scriptures Hebrew Bible (github.com/openscriptures/morphhb).
+// Remaining values are Torah-proportional estimates (~26–35% of whole-Bible counts
+// weighted for Torah's narrative density); treat as approximate.
 const TORAH_WORDS = [
-  { heb:'אֶת',        en:'acc. marker',   freq:10400 },
+  { heb:'אֶת',        en:'acc. marker',   freq:3200  },
   { heb:'כִּי',        en:'that/because',  freq:3200  },
   { heb:'אֲשֶׁר',     en:'who/which',      freq:2900  },
   { heb:'אֶל',        en:'to/toward',      freq:2100  },
@@ -23,7 +36,7 @@ const TORAH_WORDS = [
   { heb:'בְּנֵי',     en:'sons of',        freq:1100  },
   { heb:'כֹּל',       en:'all/every',      freq:900   },
   { heb:'אֱלֹהִים',   en:'God/Elohim',     freq:780   },
-  { heb:'מֹשֶׁה',     en:'Moses',          freq:755   },
+  { heb:'מֹשֶׁה',     en:'Moses',          freq:647   },
   { heb:'וַיֹּאמֶר',  en:'and he said',    freq:700   },
   { heb:'בֶּן',       en:'son',            freq:700   },
   { heb:'יִשְׂרָאֵל', en:'Israel',         freq:620   },
@@ -389,7 +402,7 @@ function drawWordZipf(canvas, ctx) {
 
   ctx.font = '10px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.38)';
   ctx.textAlign = 'left'; ctx.direction = 'ltr';
-  ctx.fillText('Torah word frequencies (top 50) · drag to pan · scroll/pinch to zoom', ML, MT - 10);
+  ctx.fillText('Torah word frequencies, top 50 (~approx.) · drag to pan · scroll/pinch to zoom', ML, MT - 10);
 }
 
 // ── Public ────────────────────────────────────────────────────────────────────

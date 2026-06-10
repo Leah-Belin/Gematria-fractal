@@ -1,61 +1,58 @@
-// Gematria Zipf — expand letters to convergence, plot rank vs. frequency.
-// Two modes: all 22 Hebrew letters, or just the current input letters.
+// Gematria Zipf — run the dictionary expansion algorithm, then plot rank vs. frequency.
+// Two modes:
+//   All Letters — start with all 22 Hebrew letters (count 1 each), expand to depth.
+//   Input       — start with the letters from the current input text, expand to depth.
 
-import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=14b18d7';
+import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=3fed687';
 
 const CANONICAL = 'אבגדהוזחטיכלמנסעפצקרשת';
 const VAL_TO_CH = {};
 for (const ch of CANONICAL) VAL_TO_CH[LETTER_VALUES[ch]] = ch;
 
-// ── Module state ──────────────────────────────────────────────────────────────
+// ── Core algorithm ────────────────────────────────────────────────────────────
+// At each step: every letter in the dict expands to the letters of its Hebrew name.
+// Those letters are added back into the dict (their counts accumulate).
+// Repeat for maxDepth steps. Final dict → Zipf plot.
 
-let _mode    = 'all';   // 'all' | 'input'
-let _canvas  = null;
-let _clickFn = null;
-let _btnRects = [];
-
-// ── Dictionary builders ───────────────────────────────────────────────────────
-
-// Expand a set of starting chars to maxDepth, accumulate into dict
-function expandToDict(startChars, maxDepth) {
-  const dict = {};
-  for (const ch of startChars) {
-    let current = [ch];
-    for (let d = 0; d < maxDepth; d++) {
-      const next = [];
-      for (const c of current) {
-        const name = LETTER_NAMES[c];
-        if (!name) { next.push(c); continue; }
-        for (const n of name) { if (LETTER_VALUES[n]) next.push(n); }
+function iterateExpansion(startDict, maxDepth) {
+  let current = { ...startDict };
+  for (let d = 0; d < maxDepth; d++) {
+    const next = {};
+    for (const [ch, cnt] of Object.entries(current)) {
+      const name = LETTER_NAMES[ch];
+      if (!name) continue;
+      for (const c of name) {
+        const canon = VAL_TO_CH[LETTER_VALUES[c]];
+        if (canon) next[canon] = (next[canon] || 0) + cnt;
       }
-      if (!next.length) break;
-      current = next;
-      if (current.length > 4000) break; // safety cap
     }
-    for (const c of current) {
-      const canon = VAL_TO_CH[LETTER_VALUES[c]];
-      if (canon) dict[canon] = (dict[canon] || 0) + 1;
-    }
+    if (!Object.keys(next).length) break;
+    current = next;
   }
-  return dict;
+  return current;
 }
 
 function buildAllDict(maxDepth) {
-  return expandToDict(CANONICAL, maxDepth);
+  const start = {};
+  for (const ch of CANONICAL) start[ch] = 1;   // all 22 letters, equal weight
+  return iterateExpansion(start, maxDepth);
 }
 
-function buildInputDict(words) {
-  const dict = {};
+function buildInputDict(words, maxDepth) {
+  const start = {};
   words.forEach(w => w.letters.forEach(lt => {
-    const finalStep = lt.steps.length > 0 ? lt.steps[lt.steps.length - 1] : null;
-    const vals = finalStep ? finalStep.vals : [lt.val];
-    vals.forEach(v => {
-      const ch = VAL_TO_CH[v];
-      if (ch) dict[ch] = (dict[ch] || 0) + 1;
-    });
+    const ch = VAL_TO_CH[lt.val];
+    if (ch) start[ch] = (start[ch] || 0) + 1;
   }));
-  return dict;
+  return iterateExpansion(start, maxDepth);
 }
+
+// ── Module state ──────────────────────────────────────────────────────────────
+
+let _mode     = 'all';
+let _canvas   = null;
+let _clickFn  = null;
+let _btnRects = [];
 
 // ── Toggle buttons ────────────────────────────────────────────────────────────
 
@@ -76,9 +73,9 @@ function drawToggle(ctx, W, MT) {
     ctx.lineWidth   = active ? 1.5 : 1;
     ctx.stroke();
 
-    ctx.font = `${active ? 'bold ' : ''}11px monospace`;
-    ctx.fillStyle   = active ? 'rgba(232,197,106,0.97)' : 'rgba(201,168,76,0.5)';
-    ctx.textAlign   = 'center'; ctx.direction = 'ltr';
+    ctx.font      = `${active ? 'bold ' : ''}11px monospace`;
+    ctx.fillStyle = active ? 'rgba(232,197,106,0.97)' : 'rgba(201,168,76,0.5)';
+    ctx.textAlign = 'center'; ctx.direction = 'ltr';
     ctx.fillText(label, bx + bW / 2, by + 13);
 
     _btnRects.push({ mode: modes[i], x: bx, y: by, w: bW, h: bH });
@@ -86,9 +83,9 @@ function drawToggle(ctx, W, MT) {
   });
 }
 
-// ── Shared chart renderer ─────────────────────────────────────────────────────
+// ── Chart ─────────────────────────────────────────────────────────────────────
 
-function drawZipfChart(canvas, ctx, dict, inputChars, title) {
+function drawChart(canvas, ctx, dict, inputChars, title) {
   const W = canvas.width, H = canvas.height;
   const ML = 62, MR = 28, MT = 56, MB = 52;
   const PW = W - ML - MR, PH = H - MT - MB;
@@ -102,7 +99,12 @@ function drawZipfChart(canvas, ctx, dict, inputChars, title) {
     .map(([ch, cnt]) => ({ ch, cnt }))
     .sort((a, b) => b.cnt - a.cnt);
 
-  if (!entries.length) return;
+  if (!entries.length) {
+    ctx.font = '13px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.4)';
+    ctx.textAlign = 'center'; ctx.direction = 'ltr';
+    ctx.fillText('no input text', canvas.width / 2, canvas.height / 2);
+    return;
+  }
 
   const total      = entries.reduce((s, e) => s + e.cnt, 0);
   const maxRel     = entries[0].cnt / total;
@@ -125,15 +127,15 @@ function drawZipfChart(canvas, ctx, dict, inputChars, title) {
     ctx.textAlign = 'right'; ctx.direction = 'ltr';
     ctx.fillText((Math.pow(10, p) * 100).toFixed(1) + '%', ML - 4, y + 3);
   }
-  [1, 3, 6, 10, entries.length].forEach(r => {
-    if (r > entries.length) return;
-    const x = px(Math.log10(r));
-    ctx.strokeStyle = 'rgba(58,46,26,0.4)';
-    ctx.beginPath(); ctx.moveTo(x, MT); ctx.lineTo(x, MT + PH); ctx.stroke();
-    ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.3)';
-    ctx.textAlign = 'center'; ctx.direction = 'ltr';
-    ctx.fillText(r, x, MT + PH + 14);
-  });
+  [1, 3, 6, 10, entries.length].filter((v, i, a) => a.indexOf(v) === i && v <= entries.length)
+    .forEach(r => {
+      const x = px(Math.log10(r));
+      ctx.strokeStyle = 'rgba(58,46,26,0.4)';
+      ctx.beginPath(); ctx.moveTo(x, MT); ctx.lineTo(x, MT + PH); ctx.stroke();
+      ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.3)';
+      ctx.textAlign = 'center'; ctx.direction = 'ltr';
+      ctx.fillText(r, x, MT + PH + 14);
+    });
 
   // Ideal Zipf reference (slope = −1)
   ctx.save();
@@ -164,8 +166,7 @@ function drawZipfChart(canvas, ctx, dict, inputChars, title) {
 
     if (isInput) {
       ctx.save();
-      ctx.shadowColor = 'rgba(232,197,106,0.55)';
-      ctx.shadowBlur  = 14;
+      ctx.shadowColor = 'rgba(232,197,106,0.55)'; ctx.shadowBlur = 14;
       ctx.beginPath(); ctx.arc(x, y, r + 1, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(232,197,106,0.92)'; ctx.fill();
       ctx.restore();
@@ -215,13 +216,13 @@ export function drawFreq(canvas, ctx, words, maxDepth) {
   );
 
   function render() {
-    if (_mode === 'all') {
-      const dict = buildAllDict(maxDepth);
-      drawZipfChart(canvas, ctx, dict, inputChars, 'all 22 letters expanded');
-    } else {
-      const dict = buildInputDict(words);
-      drawZipfChart(canvas, ctx, dict, inputChars, 'input letters expanded');
-    }
+    const dict  = _mode === 'all'
+      ? buildAllDict(maxDepth)
+      : buildInputDict(words, maxDepth);
+    const title = _mode === 'all'
+      ? 'all 22 letters → expand → dict'
+      : 'input letters → expand → dict';
+    drawChart(canvas, ctx, dict, inputChars, title);
   }
 
   _clickFn = (e) => {

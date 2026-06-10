@@ -1,4 +1,4 @@
-import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=5ffc5d0';
+import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=b2ab823';
 
 const LETTERS = Object.keys(LETTER_VALUES);
 const N = LETTERS.length;

@@ -3,7 +3,7 @@
 //   All Letters — start with all 22 Hebrew letters (count 1 each), expand to depth.
 //   Input       — start with the letters from the current input text, expand to depth.
 
-import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=3fed687';
+import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=133c82b';
 
 const CANONICAL = 'אבגדהוזחטיכלמנסעפצקרשת';
 const VAL_TO_CH = {};
@@ -125,7 +125,9 @@ function drawChart(canvas, ctx, dict, inputChars, title) {
     ctx.beginPath(); ctx.moveTo(ML, y); ctx.lineTo(ML + PW, y); ctx.stroke();
     ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(201,168,76,0.3)';
     ctx.textAlign = 'right'; ctx.direction = 'ltr';
-    ctx.fillText((Math.pow(10, p) * 100).toFixed(1) + '%', ML - 4, y + 3);
+    const pv = Math.pow(10, p) * 100;
+    const pLabel = pv >= 10 ? pv.toFixed(0) + '%' : pv >= 1 ? pv.toFixed(1) + '%' : pv >= 0.1 ? pv.toFixed(2) + '%' : pv.toFixed(3) + '%';
+    ctx.fillText(pLabel, ML - 4, y + 3);
   }
   [1, 3, 6, 10, entries.length].filter((v, i, a) => a.indexOf(v) === i && v <= entries.length)
     .forEach(r => {

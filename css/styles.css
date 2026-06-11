@@ -218,9 +218,13 @@ canvas {
 .mode-tabs {
   display: flex;
   gap: 0.4rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
 }
+.mode-tabs::-webkit-scrollbar { display: none; }
 
 .mode-tab {
   padding: 0.3rem 0.8rem;
@@ -267,6 +271,7 @@ canvas {
   letter-spacing: 0.03em;
   line-height: 1.5;
   padding: 0.3rem 0.2rem 0;
+  margin-top: 0.25rem;
   transition: opacity 0.15s;
 }
 
@@ -278,6 +283,11 @@ canvas {
   text-decoration: underline;
   text-decoration-color: rgba(201,168,76,0.35);
   text-underline-offset: 2px;
+  display: inline-block;
+  padding: 4px 0;
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
 }
 #mode-info a:hover { opacity: 1; }
 

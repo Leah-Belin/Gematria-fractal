@@ -7,6 +7,7 @@ import { drawMatrix, resetMatrixLayout } from './matrix.js';
 import { drawLetterTree } from './lettertree.js';
 import { drawZipf } from './zipf.js';
 import { drawFreq } from './freq.js';
+import { drawShannon } from './shannon.js';
 
 const canvas = document.getElementById('fractal');
 const ctx = canvas.getContext('2d');
@@ -67,6 +68,14 @@ function stopFreq() {
   if (stopFreqFn) { stopFreqFn(); stopFreqFn = null; }
 }
 
+// ── Shannon handle ────────────────────────────────────────────────────────────
+
+let stopShannonFn = null;
+
+function stopShannon() {
+  if (stopShannonFn) { stopShannonFn(); stopShannonFn = null; }
+}
+
 // ── Orbit animation (play/pause) ──────────────────────────────────────────────
 
 let animTimerId = null;
@@ -100,7 +109,7 @@ function stopAnimation() {
 }
 
 function playAnimation() {
-  if (!analysisData || mode === 'matrix' || mode === 'letters' || mode === 'zipf' || mode === 'freq') return;
+  if (!analysisData || mode === 'matrix' || mode === 'letters' || mode === 'zipf' || mode === 'freq' || mode === 'shannon') return;
   const depth = parseInt(document.getElementById('depth').value);
   animPlaying = true;
   document.getElementById('play-btn').textContent = '⏸ Pause';
@@ -125,6 +134,7 @@ function dispatch(words) {
   stopLetterTree();
   stopZipf();
   stopFreq();
+  stopShannon();
   globalMaxEscape = computeMaxEscape(words);
   if      (mode === 'spiral')  drawSpiral(canvas, ctx, words, globalMaxEscape);
   else if (mode === 'tree')    drawTree(canvas, ctx, words, globalMaxEscape);
@@ -135,7 +145,8 @@ function dispatch(words) {
   else if (mode === 'matrix')  stopMatrixFn  = drawMatrix(canvas, ctx, words, matrixMeta);
   else if (mode === 'letters') stopLettersFn = drawLetterTree(canvas, ctx, words, parseInt(document.getElementById('depth').value));
   else if (mode === 'zipf')    stopZipfFn    = drawZipf(canvas, ctx, words);
-  else if (mode === 'freq')    stopFreqFn = drawFreq(canvas, ctx, words, parseInt(document.getElementById('depth').value));
+  else if (mode === 'freq')    stopFreqFn    = drawFreq(canvas, ctx, words, parseInt(document.getElementById('depth').value));
+  else if (mode === 'shannon') stopShannonFn = drawShannon(canvas, ctx, words, parseInt(document.getElementById('depth').value));
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -201,6 +212,7 @@ const MODE_DESC = {
   matrix:  'Force-directed graph of the 27×27 letter-expansion matrix M. An arrow j→i means letter i appears in the Hebrew name of letter j. Node size = in-degree. Brightness = eigenvector centrality (λ₁ ≈ 2.443). Gold glow = letters present in the current input text. Layout self-animates to equilibrium.',
   zipf:    'Log-log rank vs. frequency plot. <b>Letter mode:</b> Torah letter frequencies (gold) overlaid with expansion-step distributions (blue) — shows convergence toward the Perron eigenvector. <b>Word mode:</b> top 50 Torah word token frequencies vs. ideal Zipf (slope −1); drag/scroll to zoom. Letter counts: all 22 confirmed against <a href="http://xwalk.ca/lt.html" target="_blank">xwalk.ca</a> (304,805 letters; academic anchor: <a href="https://www.jstor.org/stable/3260008" target="_blank">Marx, JBL 1919</a>). Word counts: יְהוָה ≈ 1,820 and מֹשֶׁה ≈ 647 confirmed via <a href="https://www.blueletterbible.org/lexicon/h3068/kjv/wlc/0-1/" target="_blank">WLC/Blue Letter Bible</a>; remaining values are Torah-proportional estimates — authoritative Torah-only counts available via <a href="https://github.com/ETCBC/bhsa" target="_blank">ETCBC BHSA</a>.',
   freq:    'Gematria Zipf — log-log rank vs. frequency of gematria values in the expanding letter multiset. Step 0 = just the input letters. Each subsequent step expands every letter to the letters of its Hebrew name, growing the multiset by λ₁ ≈ 2.443× per step. Gold dots (deepest step) show each gematria value with its Hebrew letter inside. Dashed line = ideal Zipf (slope −1).',
+  shannon: 'Shannon entropy H = −Σ p log₂ p of the letter distribution at each expansion depth. Two curves converge from opposite sides: bright gold (input letters) starts low and rises; dim amber (all 22 letters, equal weight) starts near H_uniform ≈ 4.459 bits and falls. Both converge to the Perron eigenvector entropy H∞ (dotted line) — the information-theoretic fixed point of the expansion morphism. Reference lines: H_uniform = log₂(22) ≈ 4.459 b (maximum entropy for 22 letters) and H_Torah ≈ 4.160 b (Torah letter distribution, source: <a href="http://xwalk.ca/lt.html" target="_blank">xwalk.ca</a>). D_KL to the eigenvector shown at final depth. See Visser (2013) <a href="https://arxiv.org/abs/1212.5567" target="_blank">arXiv:1212.5567</a> for the max-entropy derivation of Zipf.',
 };
 
 // ── Main draw ─────────────────────────────────────────────────────────────────
@@ -242,7 +254,7 @@ document.getElementById('draw-btn').addEventListener('click', draw);
 function syncPlayBtn() {
   const btn = document.getElementById('play-btn');
   if (!btn) return;
-  if (mode === 'matrix' || mode === 'letters' || mode === 'zipf' || mode === 'freq') {
+  if (mode === 'matrix' || mode === 'letters' || mode === 'zipf' || mode === 'freq' || mode === 'shannon') {
     btn.textContent = '↺ Reset';
   } else if (!animPlaying) {
     btn.textContent = '▶ Play';
@@ -255,7 +267,7 @@ document.getElementById('play-btn').addEventListener('click', () => {
     if (analysisData) dispatch(analysisData);
     return;
   }
-  if (mode === 'letters' || mode === 'zipf' || mode === 'freq') {
+  if (mode === 'letters' || mode === 'zipf' || mode === 'freq' || mode === 'shannon') {
     if (analysisData) dispatch(analysisData);
     return;
   }

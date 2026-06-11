@@ -1,6 +1,6 @@
 // Letter-expansion trees — Hebrew glyph nodes, pan + pinch-zoom navigation.
 
-import { LETTER_NAMES, LETTER_VALUES } from './gematria.js?v=5b0fe49';
+import { LETTER_NAMES, LETTER_VALUES } from './gematria.js?v=ee4e594';
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 const NR       = 20;

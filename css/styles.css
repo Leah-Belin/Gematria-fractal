@@ -272,6 +272,15 @@ canvas {
 
 #mode-info:empty { opacity: 0; }
 
+#mode-info a {
+  color: var(--amber);
+  opacity: 0.85;
+  text-decoration: underline;
+  text-decoration-color: rgba(201,168,76,0.35);
+  text-underline-offset: 2px;
+}
+#mode-info a:hover { opacity: 1; }
+
 footer {
   padding: 0.8rem;
   font-size: 0.7rem;

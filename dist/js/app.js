@@ -1,12 +1,12 @@
-import { analyzeText } from './gematria.js?v=4c365d9';
-import { cacheGet, cacheSet } from './cache.js?v=4c365d9';
-import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js?v=4c365d9';
-import { drawJulia } from './mandelbrot.js?v=4c365d9';
-import { drawGraph } from './graph.js?v=4c365d9';
-import { drawMatrix, resetMatrixLayout } from './matrix.js?v=4c365d9';
-import { drawLetterTree } from './lettertree.js?v=4c365d9';
-import { drawZipf } from './zipf.js?v=4c365d9';
-import { drawFreq } from './freq.js?v=4c365d9';
+import { analyzeText } from './gematria.js?v=3b01f80';
+import { cacheGet, cacheSet } from './cache.js?v=3b01f80';
+import { drawSpiral, drawTree, drawMandala, drawScatter } from './visualizers.js?v=3b01f80';
+import { drawJulia } from './mandelbrot.js?v=3b01f80';
+import { drawGraph } from './graph.js?v=3b01f80';
+import { drawMatrix, resetMatrixLayout } from './matrix.js?v=3b01f80';
+import { drawLetterTree } from './lettertree.js?v=3b01f80';
+import { drawZipf } from './zipf.js?v=3b01f80';
+import { drawFreq } from './freq.js?v=3b01f80';
 
 const canvas = document.getElementById('fractal');
 const ctx = canvas.getContext('2d');
@@ -199,7 +199,7 @@ const MODE_DESC = {
   graph:   'Cartesian plot: x = expansion step n, y = gematria sum Σ (log₂ scale). One colored line per letter. Muted segments = pre-cycle. Bright dots + glow = attractor. ↺ markers on x-axis show where each orbit enters its cycle.',
   letters: 'Letter-expansion trees. Each Hebrew glyph shows the letters that make up its name, expanding downward. Dashed curved arrows with arrowheads mark letters that appear in their own ancestry — the self-referential loops of the Hebrew alphabet. Gold glow = letters in the current input.',
   matrix:  'Force-directed graph of the 27×27 letter-expansion matrix M. An arrow j→i means letter i appears in the Hebrew name of letter j. Node size = in-degree. Brightness = eigenvector centrality (λ₁ ≈ 2.443). Gold glow = letters present in the current input text. Layout self-animates to equilibrium.',
-  zipf:    'Log-log rank vs. frequency plot. Letter mode: Torah letter frequencies (gold) overlaid with letter frequencies in the current expansion at each depth step — shows whether the distribution follows Zipf\'s law and how expansion converges toward the Perron eigenvector. Click canvas to toggle letter ↔ word view. Word mode: top 50 Torah word frequencies compared against the ideal Zipf line (slope = −1). Hard-coded from scholarly Torah letter counts and estimated word frequencies.',
+  zipf:    'Log-log rank vs. frequency plot. <b>Letter mode:</b> Torah letter frequencies (gold) overlaid with expansion-step distributions (blue) — shows convergence toward the Perron eigenvector. <b>Word mode:</b> top 50 Torah word token frequencies vs. ideal Zipf (slope −1); drag/scroll to zoom. Letter counts: all 22 confirmed against <a href="http://xwalk.ca/lt.html" target="_blank">xwalk.ca</a> (304,805 letters; academic anchor: <a href="https://www.jstor.org/stable/3260008" target="_blank">Marx, JBL 1919</a>). Word counts: יְהוָה ≈ 1,820 and מֹשֶׁה ≈ 647 confirmed via <a href="https://www.blueletterbible.org/lexicon/h3068/kjv/wlc/0-1/" target="_blank">WLC/Blue Letter Bible</a>; remaining values are Torah-proportional estimates — authoritative Torah-only counts available via <a href="https://github.com/ETCBC/bhsa" target="_blank">ETCBC BHSA</a>.',
   freq:    'Gematria Zipf — log-log rank vs. frequency of gematria values in the expanding letter multiset. Step 0 = just the input letters. Each subsequent step expands every letter to the letters of its Hebrew name, growing the multiset by λ₁ ≈ 2.443× per step. Gold dots (deepest step) show each gematria value with its Hebrew letter inside. Dashed line = ideal Zipf (slope −1).',
 };
 
@@ -280,18 +280,18 @@ document.querySelectorAll('.mode-tab').forEach(btn => {
     mode = this.dataset.mode;
     syncPlayBtn();
     const infoEl = document.getElementById('mode-info');
-    if (infoEl) infoEl.textContent = MODE_DESC[mode] || '';
+    if (infoEl) infoEl.innerHTML = MODE_DESC[mode] || '';
     if (analysisData) dispatch(analysisData);
   });
 
   btn.addEventListener('mouseenter', function () {
     const infoEl = document.getElementById('mode-info');
-    if (infoEl) infoEl.textContent = MODE_DESC[this.dataset.mode] || '';
+    if (infoEl) infoEl.innerHTML = MODE_DESC[this.dataset.mode] || '';
   });
 
   btn.addEventListener('mouseleave', function () {
     const infoEl = document.getElementById('mode-info');
-    if (infoEl) infoEl.textContent = MODE_DESC[mode] || '';
+    if (infoEl) infoEl.innerHTML = MODE_DESC[mode] || '';
   });
 });
 

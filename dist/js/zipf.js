@@ -1,7 +1,7 @@
 // Zipf visualization — log-log rank vs. frequency for Torah letters and words.
 // Toggle Letters / Words at top-right. In word mode, drag to pan, scroll/pinch to zoom.
 
-import { LETTER_VALUES } from './gematria.js?v=4c365d9';
+import { LETTER_VALUES } from './gematria.js?v=3b01f80';
 
 // ── Torah data ────────────────────────────────────────────────────────────────
 

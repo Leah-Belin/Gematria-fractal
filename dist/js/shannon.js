@@ -2,7 +2,7 @@
 // Two curves converge to the same Perron eigenvector entropy from opposite sides:
 // all-22-letters starts near H_uniform (4.459 b) and falls; input starts low and rises.
 
-import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=45adcda';
+import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=5b0fe49';
 
 const CANONICAL = 'אבגדהוזחטיכלמנסעפצקרשת';
 const VAL_TO_CH = {};

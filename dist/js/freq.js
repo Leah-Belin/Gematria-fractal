@@ -3,7 +3,7 @@
 //   All Letters — start with all 22 Hebrew letters (count 1 each), expand to depth.
 //   Input       — start with the letters from the current input text, expand to depth.
 
-import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=45adcda';
+import { LETTER_VALUES, LETTER_NAMES } from './gematria.js?v=5b0fe49';
 
 const CANONICAL = 'אבגדהוזחטיכלמנסעפצקרשת';
 const VAL_TO_CH = {};

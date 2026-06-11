@@ -1,7 +1,7 @@
 // Zipf visualization — log-log rank vs. frequency for Torah letters and words.
 // Toggle Letters / Words at top-right. In word mode, drag to pan, scroll/pinch to zoom.
 
-import { LETTER_VALUES } from './gematria.js?v=45adcda';
+import { LETTER_VALUES } from './gematria.js?v=5b0fe49';
 
 // ── Torah data ────────────────────────────────────────────────────────────────
 
@@ -22,6 +22,7 @@ const TORAH_LETTER_FREQ = {
 // Confirmed: יְהוָה ≈ 1,820 (multiple sources); מֹשֶׁה ≈ 647 (BDB/Strong's H4872 by book).
 // Whole-Bible counts via Westminster Leningrad Codex (Blue Letter Bible / Strong's).
 // For authoritative Torah-only counts: ETCBC BHSA corpus (github.com/ETCBC/bhsa)
+// — cite as: doi:10.17026/dans-z6y-skyh
 // or Open Scriptures Hebrew Bible (github.com/openscriptures/morphhb).
 // Remaining values are Torah-proportional estimates (~26–35% of whole-Bible counts
 // weighted for Torah's narrative density); treat as approximate.
